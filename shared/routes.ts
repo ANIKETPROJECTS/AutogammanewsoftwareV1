@@ -61,6 +61,23 @@ export const api = {
           201: serviceMasterSchema,
         },
       },
+      update: {
+        method: "PATCH" as const,
+        path: "/api/masters/services/:id",
+        input: serviceMasterSchema.partial(),
+        responses: {
+          200: serviceMasterSchema,
+          404: z.object({ message: z.string() }),
+        },
+      },
+      delete: {
+        method: "DELETE" as const,
+        path: "/api/masters/services/:id",
+        responses: {
+          200: z.void(),
+          404: z.object({ message: z.string() }),
+        },
+      },
     },
     vehicleTypes: {
       list: {

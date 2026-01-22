@@ -46,6 +46,8 @@ export interface IStorage {
   // Masters
   getServices(): Promise<ServiceMaster[]>;
   createService(service: InsertServiceMaster): Promise<ServiceMaster>;
+  updateService(id: string, service: Partial<ServiceMaster>): Promise<ServiceMaster | undefined>;
+  deleteService(id: string): Promise<boolean>;
   getVehicleTypes(): Promise<VehicleType[]>;
   createVehicleType(name: string): Promise<VehicleType>;
 
@@ -142,6 +144,21 @@ export class MongoStorage implements IStorage {
       name: s.name,
       pricingByVehicleType: s.pricingByVehicleType as any
     };
+  }
+
+  async updateService(id: string, service: Partial<ServiceMaster>): Promise<ServiceMaster | undefined> {
+    const s = await ServiceMasterModel.findByIdAndUpdate(id, service, { new: true });
+    if (!s) return undefined;
+    return {
+      id: s._id.toString(),
+      name: s.name,
+      pricingByVehicleType: s.pricingByVehicleType as any
+    };
+  }
+
+  async deleteService(id: string): Promise<boolean> {
+    const result = await ServiceMasterModel.findByIdAndDelete(id);
+    return !!result;
   }
 
   async getVehicleTypes(): Promise<VehicleType[]> {

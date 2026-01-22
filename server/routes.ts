@@ -87,6 +87,22 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/masters/services/:id", async (req, res) => {
+    try {
+      const service = await storage.updateService(req.params.id, req.body);
+      if (!service) return res.status(404).json({ message: "Service not found" });
+      res.json(service);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/services/:id", async (req, res) => {
+    const success = await storage.deleteService(req.params.id);
+    if (!success) return res.status(404).json({ message: "Service not found" });
+    res.json({ message: "Service deleted" });
+  });
+
   app.get(api.masters.vehicleTypes.list.path, async (req, res) => {
     const types = await storage.getVehicleTypes();
     res.json(types);

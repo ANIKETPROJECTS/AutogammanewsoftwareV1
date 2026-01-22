@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Wrench, Shield, Package, Car, X } from "lucide-react";
+import { Plus, Trash2, Wrench, Shield, Package, Car, X, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
@@ -24,6 +24,7 @@ import {
 export default function MastersPage() {
   const { toast } = useToast();
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [editingService, setEditingService] = useState<ServiceMaster | null>(null);
   const [isManageVehicleTypesOpen, setIsManageVehicleTypesOpen] = useState(false);
   const [newVehicleTypeName, setNewVehicleTypeName] = useState("");
 
@@ -33,6 +34,14 @@ export default function MastersPage() {
 
   const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({
     queryKey: [api.masters.vehicleTypes.list.path],
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/masters/services/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.services.list.path] });
+      toast({ title: "Success", description: "Service deleted successfully" });
+    },
   });
 
   const createVehicleTypeMutation = useMutation({
@@ -125,8 +134,20 @@ export default function MastersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {services.map((service) => (
                 <Card key={service.id}>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-lg">{service.name}</CardTitle>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setEditingService(service)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        if (confirm("Are you sure you want to delete this service?")) {
+                          deleteServiceMutation.mutate(service.id!);
+                        }
+                      }}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -141,6 +162,21 @@ export default function MastersPage() {
                 </Card>
               ))}
             </div>
+
+            <Dialog open={!!editingService} onOpenChange={(open) => !open && setEditingService(null)}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Service</DialogTitle>
+                </DialogHeader>
+                {editingService && (
+                  <AddServiceForm 
+                    onClose={() => setEditingService(null)} 
+                    vehicleTypes={vehicleTypes} 
+                    initialData={editingService} 
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* PPF and Accessories tabs remain simple for now */}
@@ -156,16 +192,21 @@ export default function MastersPage() {
   );
 }
 
-function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicleTypes: VehicleType[] }) {
+function AddServiceForm({ onClose, vehicleTypes, initialData }: { onClose: () => void, vehicleTypes: VehicleType[], initialData?: ServiceMaster }) {
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [pricing, setPricing] = useState<any[]>([]);
+  const [name, setName] = useState(initialData?.name || "");
+  const [pricing, setPricing] = useState<any[]>(initialData?.pricingByVehicleType || []);
 
-  const createServiceMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", api.masters.services.create.path, data),
+  const serviceMutation = useMutation({
+    mutationFn: (data: any) => {
+      if (initialData?.id) {
+        return apiRequest("PATCH", `/api/masters/services/${initialData.id}`, data);
+      }
+      return apiRequest("POST", api.masters.services.create.path, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.masters.services.list.path] });
-      toast({ title: "Success", description: "Service added successfully" });
+      toast({ title: "Success", description: initialData ? "Service updated successfully" : "Service added successfully" });
       onClose();
     },
   });
@@ -241,7 +282,9 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => createServiceMutation.mutate({ name, pricingByVehicleType: pricing })}>Save Service</Button>
+        <Button onClick={() => serviceMutation.mutate({ name, pricingByVehicleType: pricing })}>
+          {initialData ? "Update Service" : "Save Service"}
+        </Button>
       </div>
     </div>
   );
