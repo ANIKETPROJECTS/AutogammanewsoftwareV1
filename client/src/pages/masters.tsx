@@ -4,10 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Wrench, Shield, Package, Car } from "lucide-react";
+import { Plus, Trash2, Wrench, Shield, Package, Car, X } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { api } from "@shared/routes";
+import { api, ServiceMaster, VehicleType } from "@shared/routes";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,11 +18,11 @@ export default function MastersPage() {
   const [isManageVehicleTypesOpen, setIsManageVehicleTypesOpen] = useState(false);
   const [newVehicleTypeName, setNewVehicleTypeName] = useState("");
 
-  const { data: services } = useQuery({
+  const { data: services = [] } = useQuery<ServiceMaster[]>({
     queryKey: [api.masters.services.list.path],
   });
 
-  const { data: vehicleTypes } = useQuery({
+  const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({
     queryKey: [api.masters.vehicleTypes.list.path],
   });
 
@@ -69,7 +69,7 @@ export default function MastersPage() {
                     <Button onClick={() => createVehicleTypeMutation.mutate(newVehicleTypeName)}>Add</Button>
                   </div>
                   <div className="space-y-2">
-                    {vehicleTypes?.map((type: any) => (
+                    {vehicleTypes.map((type) => (
                       <div key={type.id} className="flex items-center justify-between p-2 border rounded-md">
                         <span>{type.name}</span>
                       </div>
@@ -90,7 +90,7 @@ export default function MastersPage() {
                 <DialogHeader>
                   <DialogTitle>Add New Service</DialogTitle>
                 </DialogHeader>
-                <AddServiceForm onClose={() => setIsAddServiceOpen(false)} vehicleTypes={vehicleTypes || []} />
+                <AddServiceForm onClose={() => setIsAddServiceOpen(false)} vehicleTypes={vehicleTypes} />
               </DialogContent>
             </Dialog>
           </div>
@@ -114,17 +114,17 @@ export default function MastersPage() {
 
           <TabsContent value="service">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {services?.map((service: any) => (
+              {services.map((service) => (
                 <Card key={service.id}>
                   <CardHeader>
                     <CardTitle className="text-lg">{service.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {service.pricingByVehicleType.map((p: any) => (
+                      {service.pricingByVehicleType.map((p) => (
                         <div key={p.vehicleType} className="space-y-1">
                           <p className="text-xs font-bold text-primary uppercase">{p.vehicleType}</p>
-                          {p.options.map((opt: any) => (
+                          {p.options.map((opt) => (
                             <div key={opt.id} className="flex justify-between text-sm">
                               <span>{opt.name}</span>
                               <span className="font-medium">₹{opt.price}</span>
@@ -152,7 +152,7 @@ export default function MastersPage() {
   );
 }
 
-function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicleTypes: any[] }) {
+function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicleTypes: VehicleType[] }) {
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [pricing, setPricing] = useState<any[]>([]);
@@ -199,7 +199,7 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Label className="text-lg font-bold">Pricing by Vehicle Type</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {vehicleTypes.map(vt => (
               <Button key={vt.id} variant="outline" size="sm" onClick={() => addVehiclePricing(vt.name)}>
                 + {vt.name}
@@ -209,14 +209,14 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
         </div>
 
         {pricing.map((p, typeIndex) => (
-          <Card key={p.vehicleType} className="border-dashed">
+          <Card key={p.vehicleType} className="border-dashed overflow-visible">
             <CardHeader className="py-3 bg-muted/50 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-sm font-bold uppercase">{p.vehicleType}</CardTitle>
               <Button variant="ghost" size="sm" onClick={() => {
                 const n = [...pricing];
                 n.splice(typeIndex, 1);
                 setPricing(n);
-              }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              }}><X className="h-4 w-4 text-destructive" /></Button>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
               {p.options.map((opt: any, optIndex: number) => (
@@ -244,7 +244,7 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
                 </div>
               ))}
               <Button variant="outline" className="w-full border-dashed" onClick={() => addWarrantyOption(typeIndex)}>
-                + Add Warranty Option
+                <Plus className="h-4 w-4 mr-2" /> Add Warranty Option
               </Button>
             </CardContent>
           </Card>
@@ -258,3 +258,4 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
     </div>
   );
 }
+

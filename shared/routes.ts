@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { insertUserSchema, loginSchema, dashboardDataSchema } from "./schema";
+import { 
+  insertUserSchema, 
+  loginSchema, 
+  dashboardDataSchema, 
+  serviceMasterSchema, 
+  insertServiceMasterSchema, 
+  vehicleTypeSchema 
+} from "./schema";
 
 export const api = {
   auth: {
