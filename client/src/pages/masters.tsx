@@ -220,10 +220,17 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase text-muted-foreground">Single Price</Label>
                 <Input 
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="0" 
                   value={p.price}
-                  onChange={(e) => updatePrice(typeIndex, e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^[0-9]+$/.test(value)) {
+                      updatePrice(typeIndex, value);
+                    }
+                  }}
                 />
               </div>
             </CardContent>
