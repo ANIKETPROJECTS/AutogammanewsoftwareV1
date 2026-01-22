@@ -12,6 +12,14 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+
 export default function MastersPage() {
   const { toast } = useToast();
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
@@ -199,12 +207,19 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Label className="text-lg font-bold">Pricing by Vehicle Type</Label>
-          <div className="flex flex-wrap gap-2">
-            {vehicleTypes.map(vt => (
-              <Button key={vt.id} variant="outline" size="sm" onClick={() => addVehiclePricing(vt.name)}>
-                + {vt.name}
-              </Button>
-            ))}
+          <div className="w-64">
+            <Select onValueChange={(value) => addVehiclePricing(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Add Vehicle Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleTypes.map(vt => (
+                  <SelectItem key={vt.id} value={vt.name} disabled={pricing.some(p => p.vehicleType === vt.name)}>
+                    {vt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
