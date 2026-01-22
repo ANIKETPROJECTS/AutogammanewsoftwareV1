@@ -130,14 +130,9 @@ export default function MastersPage() {
                   <CardContent>
                     <div className="space-y-4">
                       {service.pricingByVehicleType.map((p) => (
-                        <div key={p.vehicleType} className="space-y-1">
-                          <p className="text-xs font-bold text-primary uppercase">{p.vehicleType}</p>
-                          {p.options.map((opt) => (
-                            <div key={opt.id} className="flex justify-between text-sm">
-                              <span>{opt.name}</span>
-                              <span className="font-medium">₹{opt.price}</span>
-                            </div>
-                          ))}
+                        <div key={p.vehicleType} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0">
+                          <span className="text-xs font-bold text-primary uppercase">{p.vehicleType}</span>
+                          <span className="font-medium">₹{p.price}</span>
                         </div>
                       ))}
                     </div>
@@ -176,24 +171,12 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
 
   const addVehiclePricing = (typeName: string) => {
     if (pricing.some(p => p.vehicleType === typeName)) return;
-    setPricing([...pricing, { vehicleType: typeName, options: [] }]);
+    setPricing([...pricing, { vehicleType: typeName, price: 0 }]);
   };
 
-  const addWarrantyOption = (typeIndex: number) => {
+  const updatePrice = (typeIndex: number, value: string) => {
     const newPricing = [...pricing];
-    newPricing[typeIndex].options.push({ id: Math.random().toString(36).substr(2, 9), name: "", price: 0 });
-    setPricing(newPricing);
-  };
-
-  const removeWarrantyOption = (typeIndex: number, optIndex: number) => {
-    const newPricing = [...pricing];
-    newPricing[typeIndex].options.splice(optIndex, 1);
-    setPricing(newPricing);
-  };
-
-  const updateWarranty = (typeIndex: number, optIndex: number, field: string, value: any) => {
-    const newPricing = [...pricing];
-    newPricing[typeIndex].options[optIndex][field] = value;
+    newPricing[typeIndex].price = value;
     setPricing(newPricing);
   };
 
@@ -234,33 +217,15 @@ function AddServiceForm({ onClose, vehicleTypes }: { onClose: () => void, vehicl
               }}><X className="h-4 w-4 text-destructive" /></Button>
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
-              {p.options.map((opt: any, optIndex: number) => (
-                <div key={opt.id} className="flex gap-4 items-end">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Warranty Name</Label>
-                    <Input 
-                      placeholder="e.g. TPU 5 Years Gloss" 
-                      value={opt.name}
-                      onChange={(e) => updateWarranty(typeIndex, optIndex, "name", e.target.value)}
-                    />
-                  </div>
-                  <div className="w-32 space-y-1">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Price</Label>
-                    <Input 
-                      type="number"
-                      placeholder="0" 
-                      value={opt.price}
-                      onChange={(e) => updateWarranty(typeIndex, optIndex, "price", e.target.value)}
-                    />
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => removeWarrantyOption(typeIndex, optIndex)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" className="w-full border-dashed" onClick={() => addWarrantyOption(typeIndex)}>
-                <Plus className="h-4 w-4 mr-2" /> Add Warranty Option
-              </Button>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase text-muted-foreground">Single Price</Label>
+                <Input 
+                  type="number"
+                  placeholder="0" 
+                  value={p.price}
+                  onChange={(e) => updatePrice(typeIndex, e.target.value)}
+                />
+              </div>
             </CardContent>
           </Card>
         ))}
