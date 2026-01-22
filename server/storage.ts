@@ -34,13 +34,23 @@ export class MongoStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const user = await UserModel.findById(id);
     if (!user) return undefined;
-    return { id: user._id.toString(), email: user.email, password: user.password, name: user.name };
+    return { 
+      id: user._id.toString(), 
+      email: user.email, 
+      password: user.password as string | undefined, 
+      name: user.name as string | undefined 
+    };
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const user = await UserModel.findOne({ email });
     if (!user) return undefined;
-    return { id: user._id.toString(), email: user.email, password: user.password, name: user.name };
+    return { 
+      id: user._id.toString(), 
+      email: user.email, 
+      password: user.password as string | undefined, 
+      name: user.name as string | undefined 
+    };
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
