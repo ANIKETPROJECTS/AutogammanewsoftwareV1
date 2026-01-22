@@ -47,53 +47,6 @@ export default function MastersPage() {
               Manage your service, PPF, and accessories master data.
             </p>
           </div>
-          <div className="flex gap-3">
-            <Dialog open={isManageVehicleTypesOpen} onOpenChange={setIsManageVehicleTypesOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Car className="h-4 w-4" />
-                  Manage Vehicle Types
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Manage Vehicle Types</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="Vehicle Type Name (e.g. SUV, Sedan)" 
-                      value={newVehicleTypeName}
-                      onChange={(e) => setNewVehicleTypeName(e.target.value)}
-                    />
-                    <Button onClick={() => createVehicleTypeMutation.mutate(newVehicleTypeName)}>Add</Button>
-                  </div>
-                  <div className="space-y-2">
-                    {vehicleTypes.map((type) => (
-                      <div key={type.id} className="flex items-center justify-between p-2 border rounded-md">
-                        <span>{type.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Service
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Service</DialogTitle>
-                </DialogHeader>
-                <AddServiceForm onClose={() => setIsAddServiceOpen(false)} vehicleTypes={vehicleTypes} />
-              </DialogContent>
-            </Dialog>
-          </div>
         </div>
 
         <Tabs defaultValue="service" className="w-full">
@@ -112,7 +65,54 @@ export default function MastersPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="service">
+          <TabsContent value="service" className="space-y-6">
+            <div className="flex justify-end gap-3">
+              <Dialog open={isManageVehicleTypesOpen} onOpenChange={setIsManageVehicleTypesOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Car className="h-4 w-4" />
+                    Manage Vehicle Types
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Manage Vehicle Types</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Vehicle Type Name (e.g. SUV, Sedan)" 
+                        value={newVehicleTypeName}
+                        onChange={(e) => setNewVehicleTypeName(e.target.value)}
+                      />
+                      <Button onClick={() => createVehicleTypeMutation.mutate(newVehicleTypeName)}>Add</Button>
+                    </div>
+                    <div className="space-y-2">
+                      {vehicleTypes.map((type) => (
+                        <div key={type.id} className="flex items-center justify-between p-2 border rounded-md">
+                          <span>{type.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isAddServiceOpen} onOpenChange={setIsAddServiceOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Service
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Service</DialogTitle>
+                  </DialogHeader>
+                  <AddServiceForm onClose={() => setIsAddServiceOpen(false)} vehicleTypes={vehicleTypes} />
+                </DialogContent>
+              </Dialog>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {services.map((service) => (
                 <Card key={service.id}>
