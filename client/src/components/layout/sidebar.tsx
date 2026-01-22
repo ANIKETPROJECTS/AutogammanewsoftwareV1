@@ -2,15 +2,13 @@ import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, 
   Search, 
-  UserPlus, 
-  Users, 
-  Headphones, 
-  Filter, 
-  FileText, 
+  ClipboardList, 
+  PlusSquare, 
+  FileCheck, 
   Wrench, 
-  Package, 
   Calendar, 
   Ticket, 
+  Database,
   Settings, 
   LogOut 
 } from "lucide-react";
@@ -20,15 +18,13 @@ import { useAuth } from "@/hooks/use-auth";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Search, label: "Inquiry", href: "/inquiry" },
-  { icon: UserPlus, label: "Register Customers", href: "/register" },
-  { icon: Users, label: "Registered Customers", href: "/customers" },
-  { icon: Headphones, label: "Customer Service", href: "/service" },
-  { icon: Filter, label: "Service Funnel", href: "/funnel" },
-  { icon: FileText, label: "Invoices & Tracking", href: "/invoices" },
+  { icon: ClipboardList, label: "Job cards", href: "/job-cards" },
+  { icon: PlusSquare, label: "Add Job", href: "/add-job" },
+  { icon: FileCheck, label: "Invoice", href: "/invoice" },
   { icon: Wrench, label: "Technicians", href: "/technicians" },
-  { icon: Package, label: "Inventory", href: "/inventory" },
-  { icon: Calendar, label: "Appointments", href: "/appointments" },
+  { icon: Calendar, label: "Appointment", href: "/appointments" },
   { icon: Ticket, label: "Tickets", href: "/tickets" },
+  { icon: Database, label: "Masters", href: "/masters" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 

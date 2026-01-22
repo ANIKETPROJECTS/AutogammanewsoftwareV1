@@ -60,15 +60,13 @@ function Router() {
 
       {/* Redirect placeholder routes to dashboard for now */}
       <Route path="/inquiry"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/register"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/customers"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/service"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/funnel"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/invoices"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/job-cards"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/add-job"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/invoice"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/technicians"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/inventory"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/appointments"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/tickets"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/masters"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/settings"><ProtectedRoute component={DashboardPage} /></Route>
 
       <Route component={NotFound} />
