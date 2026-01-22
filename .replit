@@ -37,3 +37,8 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+MONGODB_URI = "mongodb+srv://raneaniket23_db_user:7fNAAjj3HU4BGVyw@autogammanew.v3kbqfw.mongodb.net/?appName=Autogammanew"
