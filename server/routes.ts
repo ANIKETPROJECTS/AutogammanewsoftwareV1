@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import session from "express-session";
 import { connectDB } from "./db";
+import mongoose from "mongoose";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -71,14 +72,18 @@ export async function registerRoutes(
   });
 
   // Seed default user if not exists
-  const defaultEmail = "Autogarage@system.com";
-  const existing = await storage.getUserByEmail(defaultEmail);
-  if (!existing) {
-    await storage.createUser({
-      email: defaultEmail,
-      password: "password123", // Matches the dummy login in screenshot roughly
-    });
-    console.log("Seeded default user:", defaultEmail);
+  if (mongoose.connection.readyState === 1) {
+    const defaultEmail = "Autogarage@system.com";
+    const existing = await storage.getUserByEmail(defaultEmail);
+    if (!existing) {
+      await storage.createUser({
+        email: defaultEmail,
+        password: "password123", // Matches the dummy login in screenshot roughly
+      });
+      console.log("Seeded default user:", defaultEmail);
+    }
+  } else {
+    console.warn("MongoDB not connected, skipping seed.");
   }
 
   return httpServer;
