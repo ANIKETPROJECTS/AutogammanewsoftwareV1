@@ -46,4 +46,33 @@ export const dashboardDataSchema = z.object({
   inventoryByCategory: z.array(chartDataSchema),
 });
 
-export type DashboardData = z.infer<typeof dashboardDataSchema>;
+// Service Master Schemas
+export const warrantyOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  price: z.coerce.number(),
+});
+
+export const vehiclePricingSchema = z.object({
+  vehicleType: z.string(),
+  options: z.array(warrantyOptionSchema),
+});
+
+export const serviceMasterSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  pricingByVehicleType: z.array(vehiclePricingSchema),
+});
+
+export type WarrantyOption = z.infer<typeof warrantyOptionSchema>;
+export type VehiclePricing = z.infer<typeof vehiclePricingSchema>;
+export type ServiceMaster = z.infer<typeof serviceMasterSchema>;
+
+export const insertServiceMasterSchema = serviceMasterSchema.omit({ id: true });
+export type InsertServiceMaster = z.infer<typeof insertServiceMasterSchema>;
+
+export const vehicleTypeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+export type VehicleType = z.infer<typeof vehicleTypeSchema>;

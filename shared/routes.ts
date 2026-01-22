@@ -37,4 +37,40 @@ export const api = {
       },
     },
   },
+  masters: {
+    services: {
+      list: {
+        method: "GET" as const,
+        path: "/api/masters/services",
+        responses: {
+          200: z.array(serviceMasterSchema),
+        },
+      },
+      create: {
+        method: "POST" as const,
+        path: "/api/masters/services",
+        input: insertServiceMasterSchema,
+        responses: {
+          201: serviceMasterSchema,
+        },
+      },
+    },
+    vehicleTypes: {
+      list: {
+        method: "GET" as const,
+        path: "/api/masters/vehicle-types",
+        responses: {
+          200: z.array(vehicleTypeSchema),
+        },
+      },
+      create: {
+        method: "POST" as const,
+        path: "/api/masters/vehicle-types",
+        input: vehicleTypeSchema.omit({ id: true }),
+        responses: {
+          201: vehicleTypeSchema,
+        },
+      },
+    },
+  },
 };

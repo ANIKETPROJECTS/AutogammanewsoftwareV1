@@ -71,6 +71,37 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  // Masters Routes
+  app.get(api.masters.services.list.path, async (req, res) => {
+    const services = await storage.getServices();
+    res.json(services);
+  });
+
+  app.post(api.masters.services.create.path, async (req, res) => {
+    try {
+      const input = api.masters.services.create.input.parse(req.body);
+      const service = await storage.createService(input);
+      res.status(201).json(service);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.get(api.masters.vehicleTypes.list.path, async (req, res) => {
+    const types = await storage.getVehicleTypes();
+    res.json(types);
+  });
+
+  app.post(api.masters.vehicleTypes.create.path, async (req, res) => {
+    try {
+      const { name } = api.masters.vehicleTypes.create.input.parse(req.body);
+      const type = await storage.createVehicleType(name);
+      res.status(201).json(type);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
   // Seed default user if not exists
   if (mongoose.connection.readyState === 1) {
     const defaultEmail = "Autogarage@system.com";
