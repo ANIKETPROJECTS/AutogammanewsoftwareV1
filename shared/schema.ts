@@ -47,15 +47,9 @@ export const dashboardDataSchema = z.object({
 });
 
 // Service Master Schemas
-export const warrantyOptionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  price: z.coerce.number(),
-});
-
 export const vehiclePricingSchema = z.object({
   vehicleType: z.string(),
-  options: z.array(warrantyOptionSchema),
+  price: z.coerce.number(),
 });
 
 export const serviceMasterSchema = z.object({
@@ -64,7 +58,6 @@ export const serviceMasterSchema = z.object({
   pricingByVehicleType: z.array(vehiclePricingSchema),
 });
 
-export type WarrantyOption = z.infer<typeof warrantyOptionSchema>;
 export type VehiclePricing = z.infer<typeof vehiclePricingSchema>;
 export type ServiceMaster = z.infer<typeof serviceMasterSchema>;
 

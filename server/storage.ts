@@ -25,11 +25,7 @@ const serviceMasterSchema = new mongoose.Schema({
   name: { type: String, required: true },
   pricingByVehicleType: [{
     vehicleType: String,
-    options: [{
-      id: String,
-      name: String,
-      price: Number
-    }]
+    price: Number
   }]
 });
 
