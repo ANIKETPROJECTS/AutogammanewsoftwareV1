@@ -95,3 +95,16 @@ export const vehicleTypeSchema = z.object({
   name: z.string(),
 });
 export type VehicleType = z.infer<typeof vehicleTypeSchema>;
+
+// Accessory Master Schemas
+export const accessoryMasterSchema = z.object({
+  id: z.string().optional(),
+  category: z.string(),
+  name: z.string(),
+  quantity: z.coerce.number(),
+  price: z.coerce.number(),
+});
+
+export type AccessoryMaster = z.infer<typeof accessoryMasterSchema>;
+export const insertAccessoryMasterSchema = accessoryMasterSchema.omit({ id: true });
+export type InsertAccessoryMaster = z.infer<typeof insertAccessoryMasterSchema>;

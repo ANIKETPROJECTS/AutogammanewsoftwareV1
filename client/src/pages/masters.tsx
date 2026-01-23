@@ -8,7 +8,7 @@ import { Plus, Trash2, Wrench, Shield, Package, Car, X, Edit2 } from "lucide-rea
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
-import { ServiceMaster, VehicleType, PPFMaster } from "@shared/schema";
+import { ServiceMaster, VehicleType, PPFMaster, AccessoryMaster } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,6 +27,8 @@ export default function MastersPage() {
   const [editingService, setEditingService] = useState<ServiceMaster | null>(null);
   const [isAddPPFOpen, setIsAddPPFOpen] = useState(false);
   const [editingPPF, setEditingPPF] = useState<PPFMaster | null>(null);
+  const [isAddAccessoryOpen, setIsAddAccessoryOpen] = useState(false);
+  const [editingAccessory, setEditingAccessory] = useState<AccessoryMaster | null>(null);
   const [isManageVehicleTypesOpen, setIsManageVehicleTypesOpen] = useState(false);
   const [newVehicleTypeName, setNewVehicleTypeName] = useState("");
 
@@ -36,6 +38,10 @@ export default function MastersPage() {
 
   const { data: ppfs = [] } = useQuery<PPFMaster[]>({
     queryKey: [api.masters.ppf.list.path],
+  });
+
+  const { data: accessories = [] } = useQuery<AccessoryMaster[]>({
+    queryKey: [api.masters.accessories.list.path],
   });
 
   const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({
@@ -55,6 +61,14 @@ export default function MastersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
       toast({ title: "Success", description: "PPF deleted successfully" });
+    },
+  });
+
+  const deleteAccessoryMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/masters/accessories/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.accessories.list.path] });
+      toast({ title: "Success", description: "Accessory deleted successfully" });
     },
   });
 
@@ -268,8 +282,74 @@ export default function MastersPage() {
             </Dialog>
           </TabsContent>
 
-          <TabsContent value="accessories">
-            <Card><CardContent className="pt-6 text-muted-foreground italic">Accessories management coming soon...</CardContent></Card>
+          <TabsContent value="accessories" className="space-y-6">
+            <div className="flex justify-end gap-3">
+              <Dialog open={isAddAccessoryOpen} onOpenChange={setIsAddAccessoryOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Accessory
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Accessory</DialogTitle>
+                  </DialogHeader>
+                  <AddAccessoryForm onClose={() => setIsAddAccessoryOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {accessories.map((accessory) => (
+                <Card key={accessory.id}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <div>
+                      <div className="text-[10px] uppercase text-muted-foreground mb-1">{accessory.category}</div>
+                      <CardTitle className="text-lg">{accessory.name}</CardTitle>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setEditingAccessory(accessory)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        if (confirm("Are you sure you want to delete this accessory?")) {
+                          deleteAccessoryMutation.mutate(accessory.id!);
+                        }
+                      }}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-muted-foreground">Quantity</span>
+                        <span className="font-bold text-xl">{accessory.quantity}</span>
+                      </div>
+                      <div className="flex flex-col text-right">
+                        <span className="text-[10px] uppercase text-muted-foreground">Price</span>
+                        <span className="font-bold text-xl text-primary">₹{accessory.price}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Dialog open={!!editingAccessory} onOpenChange={(open) => !open && setEditingAccessory(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Accessory</DialogTitle>
+                </DialogHeader>
+                {editingAccessory && (
+                  <AddAccessoryForm 
+                    onClose={() => setEditingAccessory(null)} 
+                    initialData={editingAccessory} 
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
         </Tabs>
       </div>

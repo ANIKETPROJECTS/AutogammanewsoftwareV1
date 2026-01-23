@@ -133,6 +133,36 @@ export async function registerRoutes(
     res.json({ message: "PPF deleted" });
   });
 
+  app.get(api.masters.accessories.list.path, async (req, res) => {
+    const accessories = await storage.getAccessories();
+    res.json(accessories);
+  });
+
+  app.post(api.masters.accessories.create.path, async (req, res) => {
+    try {
+      const accessory = await storage.createAccessory(req.body);
+      res.status(201).json(accessory);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/masters/accessories/:id", async (req, res) => {
+    try {
+      const accessory = await storage.updateAccessory(req.params.id, req.body);
+      if (!accessory) return res.status(404).json({ message: "Accessory not found" });
+      res.json(accessory);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/accessories/:id", async (req, res) => {
+    const success = await storage.deleteAccessory(req.params.id);
+    if (!success) return res.status(404).json({ message: "Accessory not found" });
+    res.json({ message: "Accessory deleted" });
+  });
+
   app.get(api.masters.vehicleTypes.list.path, async (req, res) => {
     const types = await storage.getVehicleTypes();
     res.json(types);

@@ -132,5 +132,39 @@ export const api = {
         },
       },
     },
+    accessories: {
+      list: {
+        method: "GET" as const,
+        path: "/api/masters/accessories",
+        responses: {
+          200: z.array(accessoryMasterSchema),
+        },
+      },
+      create: {
+        method: "POST" as const,
+        path: "/api/masters/accessories",
+        input: insertAccessoryMasterSchema,
+        responses: {
+          201: accessoryMasterSchema,
+        },
+      },
+      update: {
+        method: "PATCH" as const,
+        path: "/api/masters/accessories/:id",
+        input: accessoryMasterSchema.partial(),
+        responses: {
+          200: accessoryMasterSchema,
+          404: z.object({ message: z.string() }),
+        },
+      },
+      delete: {
+        method: "DELETE" as const,
+        path: "/api/masters/accessories/:id",
+        responses: {
+          200: z.void(),
+          404: z.object({ message: z.string() }),
+        },
+      },
+    },
   },
 };

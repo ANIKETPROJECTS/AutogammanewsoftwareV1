@@ -7,6 +7,8 @@ import {
   InsertServiceMaster, 
   PPFMaster,
   InsertPPFMaster,
+  AccessoryMaster,
+  InsertAccessoryMaster,
   VehicleType 
 } from "@shared/schema";
 import session from "express-session";
@@ -52,6 +54,15 @@ const vehicleTypeSchema = new mongoose.Schema({
 
 export const VehicleTypeModel = mongoose.model("VehicleType", vehicleTypeSchema);
 
+const accessoryMasterSchema = new mongoose.Schema({
+  category: { type: String, required: true },
+  name: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  price: { type: Number, required: true }
+});
+
+export const AccessoryMasterModel = mongoose.model("AccessoryMaster", accessoryMasterSchema);
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -68,6 +79,11 @@ export interface IStorage {
   createPPF(ppf: InsertPPFMaster): Promise<PPFMaster>;
   updatePPF(id: string, ppf: Partial<PPFMaster>): Promise<PPFMaster | undefined>;
   deletePPF(id: string): Promise<boolean>;
+
+  getAccessories(): Promise<AccessoryMaster[]>;
+  createAccessory(accessory: InsertAccessoryMaster): Promise<AccessoryMaster>;
+  updateAccessory(id: string, accessory: Partial<AccessoryMaster>): Promise<AccessoryMaster | undefined>;
+  deleteAccessory(id: string): Promise<boolean>;
 
   getVehicleTypes(): Promise<VehicleType[]>;
   createVehicleType(name: string): Promise<VehicleType>;
@@ -213,6 +229,46 @@ export class MongoStorage implements IStorage {
 
   async deletePPF(id: string): Promise<boolean> {
     const result = await PPFMasterModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  async getAccessories(): Promise<AccessoryMaster[]> {
+    const accessories = await AccessoryMasterModel.find();
+    return accessories.map(a => ({
+      id: a._id.toString(),
+      category: a.category,
+      name: a.name,
+      quantity: a.quantity,
+      price: a.price
+    }));
+  }
+
+  async createAccessory(accessory: InsertAccessoryMaster): Promise<AccessoryMaster> {
+    const a = new AccessoryMasterModel(accessory);
+    await a.save();
+    return {
+      id: a._id.toString(),
+      category: a.category,
+      name: a.name,
+      quantity: a.quantity,
+      price: a.price
+    };
+  }
+
+  async updateAccessory(id: string, accessory: Partial<AccessoryMaster>): Promise<AccessoryMaster | undefined> {
+    const a = await AccessoryMasterModel.findByIdAndUpdate(id, accessory, { new: true });
+    if (!a) return undefined;
+    return {
+      id: a._id.toString(),
+      category: a.category,
+      name: a.name,
+      quantity: a.quantity,
+      price: a.price
+    };
+  }
+
+  async deleteAccessory(id: string): Promise<boolean> {
+    const result = await AccessoryMasterModel.findByIdAndDelete(id);
     return !!result;
   }
 
