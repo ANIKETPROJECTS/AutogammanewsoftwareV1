@@ -5,6 +5,8 @@ import {
   DashboardData, 
   ServiceMaster, 
   InsertServiceMaster, 
+  PPFMaster,
+  InsertPPFMaster,
   VehicleType 
 } from "@shared/schema";
 import session from "express-session";
@@ -31,6 +33,19 @@ const serviceMasterSchema = new mongoose.Schema({
 
 export const ServiceMasterModel = mongoose.model("ServiceMaster", serviceMasterSchema);
 
+const ppfMasterSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  pricingByVehicleType: [{
+    vehicleType: String,
+    options: [{
+      warrantyName: String,
+      price: Number
+    }]
+  }]
+});
+
+export const PPFMasterModel = mongoose.model("PPFMaster", ppfMasterSchema);
+
 const vehicleTypeSchema = new mongoose.Schema({
   name: { type: String, required: true }
 });
@@ -48,6 +63,12 @@ export interface IStorage {
   createService(service: InsertServiceMaster): Promise<ServiceMaster>;
   updateService(id: string, service: Partial<ServiceMaster>): Promise<ServiceMaster | undefined>;
   deleteService(id: string): Promise<boolean>;
+
+  getPPFs(): Promise<PPFMaster[]>;
+  createPPF(ppf: InsertPPFMaster): Promise<PPFMaster>;
+  updatePPF(id: string, ppf: Partial<PPFMaster>): Promise<PPFMaster | undefined>;
+  deletePPF(id: string): Promise<boolean>;
+
   getVehicleTypes(): Promise<VehicleType[]>;
   createVehicleType(name: string): Promise<VehicleType>;
 
@@ -158,6 +179,40 @@ export class MongoStorage implements IStorage {
 
   async deleteService(id: string): Promise<boolean> {
     const result = await ServiceMasterModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  async getPPFs(): Promise<PPFMaster[]> {
+    const ppfs = await PPFMasterModel.find();
+    return ppfs.map(s => ({
+      id: s._id.toString(),
+      name: s.name,
+      pricingByVehicleType: s.pricingByVehicleType as any
+    }));
+  }
+
+  async createPPF(ppf: InsertPPFMaster): Promise<PPFMaster> {
+    const s = new PPFMasterModel(ppf);
+    await s.save();
+    return {
+      id: s._id.toString(),
+      name: s.name,
+      pricingByVehicleType: s.pricingByVehicleType as any
+    };
+  }
+
+  async updatePPF(id: string, ppf: Partial<PPFMaster>): Promise<PPFMaster | undefined> {
+    const s = await PPFMasterModel.findByIdAndUpdate(id, ppf, { new: true });
+    if (!s) return undefined;
+    return {
+      id: s._id.toString(),
+      name: s.name,
+      pricingByVehicleType: s.pricingByVehicleType as any
+    };
+  }
+
+  async deletePPF(id: string): Promise<boolean> {
+    const result = await PPFMasterModel.findByIdAndDelete(id);
     return !!result;
   }
 

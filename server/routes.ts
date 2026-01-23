@@ -103,6 +103,36 @@ export async function registerRoutes(
     res.json({ message: "Service deleted" });
   });
 
+  app.get(api.masters.ppf.list.path, async (req, res) => {
+    const ppfs = await storage.getPPFs();
+    res.json(ppfs);
+  });
+
+  app.post(api.masters.ppf.create.path, async (req, res) => {
+    try {
+      const ppf = await storage.createPPF(req.body);
+      res.status(201).json(ppf);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/masters/ppf/:id", async (req, res) => {
+    try {
+      const ppf = await storage.updatePPF(req.params.id, req.body);
+      if (!ppf) return res.status(404).json({ message: "PPF not found" });
+      res.json(ppf);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/ppf/:id", async (req, res) => {
+    const success = await storage.deletePPF(req.params.id);
+    if (!success) return res.status(404).json({ message: "PPF not found" });
+    res.json({ message: "PPF deleted" });
+  });
+
   app.get(api.masters.vehicleTypes.list.path, async (req, res) => {
     const types = await storage.getVehicleTypes();
     res.json(types);

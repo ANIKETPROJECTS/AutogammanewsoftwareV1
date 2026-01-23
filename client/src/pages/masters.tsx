@@ -8,7 +8,7 @@ import { Plus, Trash2, Wrench, Shield, Package, Car, X, Edit2 } from "lucide-rea
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
-import { ServiceMaster, VehicleType } from "@shared/schema";
+import { ServiceMaster, VehicleType, PPFMaster } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,11 +25,17 @@ export default function MastersPage() {
   const { toast } = useToast();
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceMaster | null>(null);
+  const [isAddPPFOpen, setIsAddPPFOpen] = useState(false);
+  const [editingPPF, setEditingPPF] = useState<PPFMaster | null>(null);
   const [isManageVehicleTypesOpen, setIsManageVehicleTypesOpen] = useState(false);
   const [newVehicleTypeName, setNewVehicleTypeName] = useState("");
 
   const { data: services = [] } = useQuery<ServiceMaster[]>({
     queryKey: [api.masters.services.list.path],
+  });
+
+  const { data: ppfs = [] } = useQuery<PPFMaster[]>({
+    queryKey: [api.masters.ppf.list.path],
   });
 
   const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({
@@ -41,6 +47,14 @@ export default function MastersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.masters.services.list.path] });
       toast({ title: "Success", description: "Service deleted successfully" });
+    },
+  });
+
+  const deletePPFMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/masters/ppf/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
+      toast({ title: "Success", description: "PPF deleted successfully" });
     },
   });
 
@@ -179,10 +193,81 @@ export default function MastersPage() {
             </Dialog>
           </TabsContent>
 
-          {/* PPF and Accessories tabs remain simple for now */}
-          <TabsContent value="ppf">
-            <Card><CardContent className="pt-6 text-muted-foreground italic">PPF management coming soon...</CardContent></Card>
+          <TabsContent value="ppf" className="space-y-6">
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" className="flex items-center gap-2" onClick={() => setIsManageVehicleTypesOpen(true)}>
+                <Car className="h-4 w-4" />
+                Manage Vehicle Types
+              </Button>
+              <Dialog open={isAddPPFOpen} onOpenChange={setIsAddPPFOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add PPF
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New PPF</DialogTitle>
+                  </DialogHeader>
+                  <AddPPFForm onClose={() => setIsAddPPFOpen(false)} vehicleTypes={vehicleTypes} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ppfs.map((ppf) => (
+                <Card key={ppf.id}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <CardTitle className="text-lg">{ppf.name}</CardTitle>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setEditingPPF(ppf)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        if (confirm("Are you sure you want to delete this PPF?")) {
+                          deletePPFMutation.mutate(ppf.id!);
+                        }
+                      }}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4 text-sm">
+                      {ppf.pricingByVehicleType.map((v) => (
+                        <div key={v.vehicleType} className="border-b pb-2 last:border-0 last:pb-0">
+                          <div className="text-xs font-bold text-primary uppercase mb-1">{v.vehicleType}</div>
+                          {v.options.map((opt, i) => (
+                            <div key={i} className="flex justify-between items-center text-xs ml-2">
+                              <span className="text-muted-foreground">{opt.warrantyName}</span>
+                              <span className="font-medium">₹{opt.price}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Dialog open={!!editingPPF} onOpenChange={(open) => !open && setEditingPPF(null)}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit PPF</DialogTitle>
+                </DialogHeader>
+                {editingPPF && (
+                  <AddPPFForm 
+                    onClose={() => setEditingPPF(null)} 
+                    vehicleTypes={vehicleTypes} 
+                    initialData={editingPPF} 
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
+
           <TabsContent value="accessories">
             <Card><CardContent className="pt-6 text-muted-foreground italic">Accessories management coming soon...</CardContent></Card>
           </TabsContent>
@@ -284,6 +369,148 @@ function AddServiceForm({ onClose, vehicleTypes, initialData }: { onClose: () =>
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button onClick={() => serviceMutation.mutate({ name, pricingByVehicleType: pricing })}>
           {initialData ? "Update Service" : "Save Service"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => void, vehicleTypes: VehicleType[], initialData?: PPFMaster }) {
+  const { toast } = useToast();
+  const [name, setName] = useState(initialData?.name || "");
+  const [pricing, setPricing] = useState<any[]>(initialData?.pricingByVehicleType || []);
+
+  const ppfMutation = useMutation({
+    mutationFn: (data: any) => {
+      if (initialData?.id) {
+        return apiRequest("PATCH", `/api/masters/ppf/${initialData.id}`, data);
+      }
+      return apiRequest("POST", api.masters.ppf.create.path, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
+      toast({ title: "Success", description: initialData ? "PPF updated successfully" : "PPF added successfully" });
+      onClose();
+    },
+  });
+
+  const addVehiclePricing = (typeName: string) => {
+    if (pricing.some(p => p.vehicleType === typeName)) return;
+    setPricing([...pricing, { 
+      vehicleType: typeName, 
+      options: [{ warrantyName: "", price: 0 }] 
+    }]);
+  };
+
+  const addOption = (typeIndex: number) => {
+    const newPricing = [...pricing];
+    newPricing[typeIndex].options.push({ warrantyName: "", price: 0 });
+    setPricing(newPricing);
+  };
+
+  const updateOption = (typeIndex: number, optIndex: number, field: string, value: any) => {
+    const newPricing = [...pricing];
+    newPricing[typeIndex].options[optIndex][field] = value;
+    setPricing(newPricing);
+  };
+
+  const removeOption = (typeIndex: number, optIndex: number) => {
+    const newPricing = [...pricing];
+    newPricing[typeIndex].options.splice(optIndex, 1);
+    setPricing(newPricing);
+  };
+
+  return (
+    <div className="space-y-6 py-4">
+      <div className="space-y-2">
+        <Label>PPF Name</Label>
+        <Input placeholder="e.g. Garware Premium" value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-lg font-bold">Pricing by Vehicle Type</Label>
+          <div className="w-64">
+            <Select onValueChange={(value) => addVehiclePricing(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Add Vehicle Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleTypes.map(vt => (
+                  <SelectItem key={vt.id} value={vt.name} disabled={pricing.some(p => p.vehicleType === vt.name)}>
+                    {vt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {pricing.map((p, typeIndex) => (
+          <Card key={p.vehicleType} className="border-dashed overflow-visible">
+            <CardHeader className="py-3 bg-muted/50 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-sm font-bold uppercase">{p.vehicleType}</CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{p.options.length} options</span>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  const n = [...pricing];
+                  n.splice(typeIndex, 1);
+                  setPricing(n);
+                }}><X className="h-4 w-4 text-destructive" /></Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <div className="grid grid-cols-[1fr,120px,40px] gap-4 mb-2 items-end">
+                <Label className="text-[10px] uppercase text-muted-foreground">Warranty Name</Label>
+                <Label className="text-[10px] uppercase text-muted-foreground text-right">Price</Label>
+                <span></span>
+              </div>
+              
+              {p.options.map((opt: any, optIndex: number) => (
+                <div key={optIndex} className="grid grid-cols-[1fr,120px,40px] gap-4 items-center">
+                  <Input 
+                    placeholder="e.g. TPU 5 Years Gloss" 
+                    value={opt.warrantyName} 
+                    onChange={(e) => updateOption(typeIndex, optIndex, "warrantyName", e.target.value)}
+                  />
+                  <Input 
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="0" 
+                    value={opt.price}
+                    className="text-right"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^[0-9]+$/.test(value)) {
+                        updateOption(typeIndex, optIndex, "price", value);
+                      }
+                    }}
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeOption(typeIndex, optIndex)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full border-dashed"
+                onClick={() => addOption(typeIndex)}
+              >
+                <Plus className="h-3 w-3 mr-2" />
+                Add Warranty Option
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button onClick={() => ppfMutation.mutate({ name, pricingByVehicleType: pricing })}>
+          {initialData ? "Update PPF" : "Save PPF"}
         </Button>
       </div>
     </div>

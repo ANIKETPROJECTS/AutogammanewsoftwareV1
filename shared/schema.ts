@@ -46,6 +46,8 @@ export const dashboardDataSchema = z.object({
   inventoryByCategory: z.array(chartDataSchema),
 });
 
+export type DashboardData = z.infer<typeof dashboardDataSchema>;
+
 // Service Master Schemas
 export const vehiclePricingSchema = z.object({
   vehicleType: z.string(),
@@ -63,6 +65,30 @@ export type ServiceMaster = z.infer<typeof serviceMasterSchema>;
 
 export const insertServiceMasterSchema = serviceMasterSchema.omit({ id: true });
 export type InsertServiceMaster = z.infer<typeof insertServiceMasterSchema>;
+
+// PPF Master Schemas
+export const ppfPricingOptionSchema = z.object({
+  warrantyName: z.string(),
+  price: z.coerce.number(),
+});
+
+export const ppfVehiclePricingSchema = z.object({
+  vehicleType: z.string(),
+  options: z.array(ppfPricingOptionSchema),
+});
+
+export const ppfMasterSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  pricingByVehicleType: z.array(ppfVehiclePricingSchema),
+});
+
+export type PPFPricingOption = z.infer<typeof ppfPricingOptionSchema>;
+export type PPFVehiclePricing = z.infer<typeof ppfVehiclePricingSchema>;
+export type PPFMaster = z.infer<typeof ppfMasterSchema>;
+
+export const insertPPFMasterSchema = ppfMasterSchema.omit({ id: true });
+export type InsertPPFMaster = z.infer<typeof insertPPFMasterSchema>;
 
 export const vehicleTypeSchema = z.object({
   id: z.string(),

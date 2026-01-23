@@ -5,6 +5,8 @@ import {
   dashboardDataSchema, 
   serviceMasterSchema, 
   insertServiceMasterSchema, 
+  ppfMasterSchema,
+  insertPPFMasterSchema,
   vehicleTypeSchema 
 } from "./schema";
 
@@ -73,6 +75,40 @@ export const api = {
       delete: {
         method: "DELETE" as const,
         path: "/api/masters/services/:id",
+        responses: {
+          200: z.void(),
+          404: z.object({ message: z.string() }),
+        },
+      },
+    },
+    ppf: {
+      list: {
+        method: "GET" as const,
+        path: "/api/masters/ppf",
+        responses: {
+          200: z.array(ppfMasterSchema),
+        },
+      },
+      create: {
+        method: "POST" as const,
+        path: "/api/masters/ppf",
+        input: z.any(), // Flexible input for complex nested data
+        responses: {
+          201: z.any(),
+        },
+      },
+      update: {
+        method: "PATCH" as const,
+        path: "/api/masters/ppf/:id",
+        input: z.any(),
+        responses: {
+          200: z.any(),
+          404: z.object({ message: z.string() }),
+        },
+      },
+      delete: {
+        method: "DELETE" as const,
+        path: "/api/masters/ppf/:id",
         responses: {
           200: z.void(),
           404: z.object({ message: z.string() }),
