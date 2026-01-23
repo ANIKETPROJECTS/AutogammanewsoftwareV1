@@ -597,3 +597,93 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
   );
 }
 
+
+function AddAccessoryForm({ onClose, initialData }: { onClose: () => void, initialData?: AccessoryMaster }) {
+  const { toast } = useToast();
+  const [category, setCategory] = useState(initialData?.category || "");
+  const [name, setName] = useState(initialData?.name || "");
+  const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || "0");
+  const [price, setPrice] = useState(initialData?.price?.toString() || "0");
+
+  const accessoryMutation = useMutation({
+    mutationFn: (data: any) => {
+      if (initialData?.id) {
+        return apiRequest("PATCH", `/api/masters/accessories/${initialData.id}`, data);
+      }
+      return apiRequest("POST", api.masters.accessories.create.path, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.accessories.list.path] });
+      toast({ title: "Success", description: initialData ? "Accessory updated successfully" : "Accessory added successfully" });
+      onClose();
+    },
+  });
+
+  const categories = [
+    "ANDROID PLAYER",
+    "Applier Accessories",
+    "Curtains",
+    "Damping Sheet",
+    "Dash Cam",
+    "Door Visor",
+    "Duster",
+    "Fog Light",
+    "Fog Lamp Accessories",
+    "Matting",
+    "Reverse Camera"
+  ];
+
+  return (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label>Category / Type</Label>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map(c => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Accessory Name</Label>
+        <Input placeholder="Enter name" value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Quantity</Label>
+          <Input 
+            type="number" 
+            value={quantity} 
+            onChange={(e) => setQuantity(e.target.value)} 
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Price (₹)</Label>
+          <Input 
+            type="number" 
+            value={price} 
+            onChange={(e) => setPrice(e.target.value)} 
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button onClick={() => accessoryMutation.mutate({ 
+          category, 
+          name, 
+          quantity: parseInt(quantity), 
+          price: parseInt(price) 
+        })}>
+          {initialData ? "Update Accessory" : "Save Accessory"}
+        </Button>
+      </div>
+    </div>
+  );
+}

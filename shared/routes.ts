@@ -7,6 +7,8 @@ import {
   insertServiceMasterSchema, 
   ppfMasterSchema,
   insertPPFMasterSchema,
+  accessoryMasterSchema,
+  insertAccessoryMasterSchema,
   vehicleTypeSchema 
 } from "./schema";
 
