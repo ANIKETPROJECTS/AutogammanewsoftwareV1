@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Wrench, Phone, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, Wrench, Phone as PhoneIcon, Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 
 export default function TechniciansPage() {
   const { toast } = useToast();
@@ -111,7 +112,7 @@ export default function TechniciansPage() {
                       <p className="text-sm text-muted-foreground">{technician.specialty}</p>
                       {technician.phone && (
                         <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
-                          <Phone className="h-3 w-3" />
+                          <PhoneIcon className="h-3 w-3" />
                           {technician.phone}
                         </div>
                       )}
@@ -174,6 +175,8 @@ function TechnicianForm({ onClose, initialData }: { onClose: () => void; initial
   const [name, setName] = useState(initialData?.name || "");
   const [specialty, setSpecialty] = useState(initialData?.specialty || "");
   const [phone, setPhone] = useState(initialData?.phone || "");
+  const [status, setStatus] = useState<"active" | "inactive">(initialData?.status || "active");
+  const [phoneError, setPhoneError] = useState("");
 
   const mutation = useMutation({
     mutationFn: (data: any) => {
@@ -195,12 +198,38 @@ function TechnicianForm({ onClose, initialData }: { onClose: () => void; initial
     }
   });
 
+  const validatePhone = (value: string) => {
+    if (!value) {
+      setPhoneError("");
+      return true;
+    }
+    if (!/^\d+$/.test(value)) {
+      setPhoneError("Phone number must contain only digits");
+      return false;
+    }
+    if (value.length !== 10) {
+      setPhoneError("Phone number must be exactly 10 digits");
+      return false;
+    }
+    setPhoneError("");
+    return true;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setPhone(value);
+    validatePhone(value);
+  };
+
   const handleSubmit = () => {
     if (!name.trim() || !specialty.trim()) {
       toast({ title: "Error", description: "Name and Specialty are required", variant: "destructive" });
       return;
     }
-    mutation.mutate({ name, specialty, phone: phone || undefined, status: initialData?.status || "active" });
+    if (phone && !validatePhone(phone)) {
+      return;
+    }
+    mutation.mutate({ name, specialty, phone: phone || undefined, status });
   };
 
   return (
@@ -224,10 +253,24 @@ function TechnicianForm({ onClose, initialData }: { onClose: () => void; initial
       <div className="space-y-2">
         <Label>Phone</Label>
         <Input 
-          placeholder="+91 98765 43210" 
-          value={phone} 
-          onChange={(e) => setPhone(e.target.value)} 
+          placeholder="9876543210" 
+          value={phone}
+          maxLength={10}
+          onChange={handlePhoneChange}
+          className={phoneError ? "border-destructive" : ""}
         />
+        {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
+      </div>
+      <div className="flex items-center justify-between py-2">
+        <Label>Status</Label>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm ${status === "inactive" ? "text-muted-foreground" : "text-muted-foreground/50"}`}>Inactive</span>
+          <Switch 
+            checked={status === "active"} 
+            onCheckedChange={(checked) => setStatus(checked ? "active" : "inactive")}
+          />
+          <span className={`text-sm ${status === "active" ? "text-green-600 font-medium" : "text-muted-foreground/50"}`}>Active</span>
+        </div>
       </div>
       <div className="flex justify-end pt-4">
         <Button onClick={handleSubmit} disabled={mutation.isPending} className="w-full bg-primary hover:bg-primary/90">
