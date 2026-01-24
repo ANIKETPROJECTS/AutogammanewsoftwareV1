@@ -12,7 +12,9 @@ import {
   accessoryCategorySchema,
   vehicleTypeSchema,
   technicianSchema,
-  insertTechnicianSchema
+  insertTechnicianSchema,
+  appointmentSchema,
+  insertAppointmentSchema
 } from "./schema";
 
 export const api = {

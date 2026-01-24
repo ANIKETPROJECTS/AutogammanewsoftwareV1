@@ -175,7 +175,7 @@ export default function AppointmentsPage() {
                 <SelectItem value="DONE">Done</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
-            </+Select>
+            </Select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Sort by Date</label>
