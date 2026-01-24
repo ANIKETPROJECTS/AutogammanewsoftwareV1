@@ -296,6 +296,20 @@ export default function MastersPage() {
                           ))}
                         </div>
                       ))}
+                      
+                      {ppf.rolls && ppf.rolls.length > 0 && (
+                        <div className="pt-2 border-t mt-2">
+                          <div className="text-xs font-bold uppercase mb-2">Roll Inventory ({ppf.rolls.length})</div>
+                          <div className="space-y-1">
+                            {ppf.rolls.map((roll, i) => (
+                              <div key={i} className="flex justify-between items-center text-[10px] bg-muted/50 p-1 px-2 rounded">
+                                <span className="font-mono">{roll.rollNumber}</span>
+                                <span>{roll.left} / {roll.stock} sqft</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -508,6 +522,7 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
   const { toast } = useToast();
   const [name, setName] = useState(initialData?.name || "");
   const [pricing, setPricing] = useState<any[]>(initialData?.pricingByVehicleType || []);
+  const [rolls, setRolls] = useState<any[]>(initialData?.rolls || []);
 
   const ppfMutation = useMutation({
     mutationFn: (data: any) => {
@@ -522,6 +537,22 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
       onClose();
     },
   });
+
+  const addRoll = () => {
+    setRolls([...rolls, { rollNumber: "", stock: 0, left: 0 }]);
+  };
+
+  const updateRoll = (index: number, field: string, value: any) => {
+    const newRolls = [...rolls];
+    newRolls[index] = { ...newRolls[index], [field]: value };
+    setRolls(newRolls);
+  };
+
+  const removeRoll = (index: number) => {
+    const newRolls = [...rolls];
+    newRolls.splice(index, 1);
+    setRolls(newRolls);
+  };
 
   const addVehiclePricing = (typeName: string) => {
     if (pricing.some(p => p.vehicleType === typeName)) return;
@@ -636,9 +667,64 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
         ))}
       </div>
 
+      <div className="space-y-4 pt-4 border-t">
+        <div className="flex items-center justify-between">
+          <Label className="text-lg font-bold">Roll Inventory</Label>
+          <Button variant="outline" size="sm" onClick={addRoll} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add New Roll
+          </Button>
+        </div>
+
+        {rolls.map((roll, index) => (
+          <Card key={index} className="border-dashed">
+            <CardHeader className="py-2 bg-muted/30 flex flex-row items-center justify-between space-y-0">
+              <span className="text-xs font-bold uppercase">Roll #{index + 1}</span>
+              <Button variant="ghost" size="sm" onClick={() => removeRoll(index)}>
+                <X className="h-4 w-4 text-destructive" />
+              </Button>
+            </CardHeader>
+            <CardContent className="pt-3 pb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Roll Number</Label>
+                  <Input 
+                    placeholder="e.g. R-001" 
+                    value={roll.rollNumber} 
+                    onChange={(e) => updateRoll(index, "rollNumber", e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Stock (sqft)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    value={roll.stock} 
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      updateRoll(index, "stock", val);
+                      updateRoll(index, "left", val); // Default left to stock
+                    }} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Left (sqft)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    value={roll.left} 
+                    onChange={(e) => updateRoll(index, "left", Number(e.target.value))} 
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => ppfMutation.mutate({ name, pricingByVehicleType: pricing })}>
+        <Button onClick={() => ppfMutation.mutate({ name, pricingByVehicleType: pricing, rolls })}>
           {initialData ? "Update PPF" : "Save PPF"}
         </Button>
       </div>

@@ -44,6 +44,11 @@ const ppfMasterSchema = new mongoose.Schema({
       warrantyName: String,
       price: Number
     }]
+  }],
+  rolls: [{
+    rollNumber: String,
+    stock: Number,
+    left: Number
   }]
 });
 

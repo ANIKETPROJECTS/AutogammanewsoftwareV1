@@ -77,12 +77,21 @@ export const ppfVehiclePricingSchema = z.object({
   options: z.array(ppfPricingOptionSchema),
 });
 
+export const ppfRollSchema = z.object({
+  id: z.string().optional(),
+  rollNumber: z.string(),
+  stock: z.coerce.number(), // sqft
+  left: z.coerce.number(),  // sqft
+});
+
 export const ppfMasterSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   pricingByVehicleType: z.array(ppfVehiclePricingSchema),
+  rolls: z.array(ppfRollSchema).optional().default([]),
 });
 
+export type PPFRoll = z.infer<typeof ppfRollSchema>;
 export type PPFPricingOption = z.infer<typeof ppfPricingOptionSchema>;
 export type PPFVehiclePricing = z.infer<typeof ppfVehiclePricingSchema>;
 export type PPFMaster = z.infer<typeof ppfMasterSchema>;
