@@ -304,7 +304,6 @@ export default function MastersPage() {
                             {ppf.rolls.map((roll, i) => (
                               <div key={i} className="flex justify-between items-center text-[10px] bg-muted/50 p-1 px-2 rounded">
                                 <span className="font-bold">{roll.name || `Roll #${i+1}`}</span>
-                                <span className="font-mono">{roll.rollNumber}</span>
                                 <span>{roll.stock} sqft</span>
                               </div>
                             ))}
@@ -540,7 +539,7 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
   });
 
   const addRoll = () => {
-    setRolls([...rolls, { name: "", rollNumber: "", stock: 0 }]);
+    setRolls([...rolls, { name: "", stock: 0 }]);
   };
 
   const updateRoll = (index: number, field: string, value: any) => {
@@ -686,21 +685,13 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
               </Button>
             </CardHeader>
             <CardContent className="pt-3 pb-3">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-muted-foreground">Roll Name</Label>
                   <Input 
                     placeholder="e.g. Front Roll" 
                     value={roll.name} 
                     onChange={(e) => updateRoll(index, "name", e.target.value)} 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] uppercase text-muted-foreground">Roll Number</Label>
-                  <Input 
-                    placeholder="e.g. R-001" 
-                    value={roll.rollNumber} 
-                    onChange={(e) => updateRoll(index, "rollNumber", e.target.value)} 
                   />
                 </div>
                 <div className="space-y-1">

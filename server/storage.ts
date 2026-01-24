@@ -47,7 +47,6 @@ const ppfMasterSchema = new mongoose.Schema({
   }],
   rolls: [{
     name: String,
-    rollNumber: String,
     stock: Number
   }]
 });
