@@ -581,7 +581,14 @@ export default function InquiryPage() {
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4 border-t">
-                    <Button type="submit" className="bg-red-500 hover:bg-red-600 text-white px-8">Save Inquiry</Button>
+                    <Button 
+                      type="button"
+                      onClick={handleSaveClick}
+                      className="bg-red-500 hover:bg-red-600 text-white px-8"
+                      disabled={createMutation.isPending}
+                    >
+                      {createMutation.isPending ? "Saving..." : "Save Inquiry"}
+                    </Button>
                     <Button type="button" variant="outline" className="px-8" onClick={() => setIsFormOpen(false)}>Cancel</Button>
                   </div>
                 </form>
