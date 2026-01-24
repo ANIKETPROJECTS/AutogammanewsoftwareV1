@@ -16,11 +16,17 @@ export default function AccessoryCategoryDetail() {
   const { toast } = useToast();
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newAccessoryName, setNewAccessoryName] = useState("");
+  const [newAccessoryQuantity, setNewAccessoryQuantity] = useState("");
+  const [newAccessoryPrice, setNewAccessoryPrice] = useState("");
+  
   const [selectedCategory, setSelectedCategory] = useState<AccessoryCategory | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
+  
   const [editingAccessoryId, setEditingAccessoryId] = useState<string | null>(null);
-  const [editAccessoryValue, setEditAccessoryValue] = useState("");
+  const [editAccessoryName, setEditAccessoryName] = useState("");
+  const [editAccessoryQuantity, setEditAccessoryQuantity] = useState("");
+  const [editAccessoryPrice, setEditAccessoryPrice] = useState("");
 
   const { data: categories = [] } = useQuery<AccessoryCategory[]>({
     queryKey: [api.masters.accessories.categories.list.path],
@@ -63,6 +69,8 @@ export default function AccessoryCategoryDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.masters.accessories.list.path] });
       setNewAccessoryName("");
+      setNewAccessoryQuantity("");
+      setNewAccessoryPrice("");
       toast({ title: "Success", description: "Accessory item added successfully" });
     },
   });
@@ -197,57 +205,101 @@ export default function AccessoryCategoryDetail() {
             <CardContent className="space-y-4">
               {selectedCategory ? (
                 <>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <div className="sm:col-span-2">
+                      <Input 
+                        placeholder="Name" 
+                        value={newAccessoryName}
+                        onChange={(e) => setNewAccessoryName(e.target.value)}
+                      />
+                    </div>
                     <Input 
-                      placeholder="New Accessory Name" 
-                      value={newAccessoryName}
-                      onChange={(e) => setNewAccessoryName(e.target.value)}
+                      placeholder="Qty" 
+                      type="number"
+                      value={newAccessoryQuantity}
+                      onChange={(e) => setNewAccessoryQuantity(e.target.value)}
                     />
-                    <Button onClick={() => createAccessoryMutation.mutate({
-                      category: selectedCategory.name,
-                      name: newAccessoryName,
-                      quantity: 0,
-                      price: 0
-                    })}>
-                      Add Item
-                    </Button>
+                    <Input 
+                      placeholder="Price" 
+                      type="number"
+                      value={newAccessoryPrice}
+                      onChange={(e) => setNewAccessoryPrice(e.target.value)}
+                    />
+                    <div className="sm:col-span-4 flex justify-end">
+                      <Button onClick={() => createAccessoryMutation.mutate({
+                        category: selectedCategory.name,
+                        name: newAccessoryName,
+                        quantity: Number(newAccessoryQuantity) || 0,
+                        price: Number(newAccessoryPrice) || 0
+                      })}>
+                        Add Item
+                      </Button>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     {accessories
                       .filter(a => a.category === selectedCategory.name)
                       .map((acc) => (
-                        <div key={acc.id} className="flex items-center justify-between p-3 border rounded-md">
+                        <div key={acc.id} className="p-3 border rounded-md">
                           {editingAccessoryId === acc.id ? (
-                            <div className="flex items-center gap-1 flex-1">
-                              <Input 
-                                size="sm" 
-                                className="h-8 text-sm"
-                                value={editAccessoryValue}
-                                onChange={(e) => setEditAccessoryValue(e.target.value)}
-                              />
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                className="h-8 w-8"
-                                onClick={() => updateAccessoryMutation.mutate({ 
-                                  id: acc.id!, 
-                                  data: { name: editAccessoryValue } 
-                                })}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                className="h-8 w-8"
-                                onClick={() => setEditingAccessoryId(null)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                <div className="sm:col-span-2">
+                                  <Input 
+                                    size="sm" 
+                                    placeholder="Name"
+                                    value={editAccessoryName}
+                                    onChange={(e) => setEditAccessoryName(e.target.value)}
+                                  />
+                                </div>
+                                <Input 
+                                  size="sm" 
+                                  type="number"
+                                  placeholder="Qty"
+                                  value={editAccessoryQuantity}
+                                  onChange={(e) => setEditAccessoryQuantity(e.target.value)}
+                                />
+                                <Input 
+                                  size="sm" 
+                                  type="number"
+                                  placeholder="Price"
+                                  value={editAccessoryPrice}
+                                  onChange={(e) => setEditAccessoryPrice(e.target.value)}
+                                />
+                              </div>
+                              <div className="flex justify-end gap-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-8 w-8"
+                                  onClick={() => updateAccessoryMutation.mutate({ 
+                                    id: acc.id!, 
+                                    data: { 
+                                      name: editAccessoryName,
+                                      quantity: Number(editAccessoryQuantity) || 0,
+                                      price: Number(editAccessoryPrice) || 0
+                                    } 
+                                  })}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-8 w-8"
+                                  onClick={() => setEditingAccessoryId(null)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           ) : (
-                            <>
-                              <span className="truncate">{acc.name}</span>
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <span className="font-medium truncate">{acc.name}</span>
+                                <span className="text-sm text-muted-foreground">Qty: {acc.quantity}</span>
+                                <span className="text-sm text-muted-foreground text-primary font-bold">₹{acc.price}</span>
+                              </div>
                               <div className="flex items-center gap-1">
                                 <Button 
                                   variant="ghost" 
@@ -255,7 +307,9 @@ export default function AccessoryCategoryDetail() {
                                   className="h-8 w-8"
                                   onClick={() => {
                                     setEditingAccessoryId(acc.id!);
-                                    setEditAccessoryValue(acc.name);
+                                    setEditAccessoryName(acc.name);
+                                    setEditAccessoryQuantity(acc.quantity.toString());
+                                    setEditAccessoryPrice(acc.price.toString());
                                   }}
                                 >
                                   <Edit2 className="h-4 w-4" />
@@ -271,7 +325,7 @@ export default function AccessoryCategoryDetail() {
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
-                            </>
+                            </div>
                           )}
                         </div>
                       ))}
