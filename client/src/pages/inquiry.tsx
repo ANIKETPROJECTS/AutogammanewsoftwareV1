@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
-import { Inquiry, InsertInquiry, ServiceMaster, AccessoryMaster, VehicleType, AccessoryCategory } from "@shared/schema";
+import { Inquiry, InsertInquiry, ServiceMaster, AccessoryMaster, VehicleType, AccessoryCategory, PPFMaster } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertInquirySchema } from "@shared/schema";
@@ -52,7 +53,8 @@ import {
   Download, 
   Send, 
   X,
-  PlusCircle
+  PlusCircle,
+  IndianRupee
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -68,6 +70,9 @@ export default function InquiryPage() {
   });
   const { data: services = [] } = useQuery<ServiceMaster[]>({
     queryKey: [api.masters.services.list.path],
+  });
+  const { data: ppfMasters = [] } = useQuery<PPFMaster[]>({
+    queryKey: [api.masters.ppf.list.path],
   });
   const { data: accessories = [] } = useQuery<AccessoryMaster[]>({
     queryKey: [api.masters.accessories.list.path],
@@ -114,7 +119,6 @@ export default function InquiryPage() {
       notes: "",
       ourPrice: 0,
       customerPrice: 0,
-      date: format(new Date(), "yyyy-MM-dd"),
       inquiryId: `INQA${Math.floor(Math.random() * 1000)}`,
     },
   });
@@ -128,6 +132,59 @@ export default function InquiryPage() {
     control: form.control,
     name: "accessories",
   });
+
+  // Intermediate state for selection
+  const [selectedService, setSelectedService] = useState("");
+  const [selectedVehicleType, setSelectedVehicleType] = useState("");
+  const [selectedWarranty, setSelectedWarranty] = useState("");
+
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedAccessory, setSelectedAccessory] = useState("");
+
+  const handleAddService = () => {
+    const service = services.find(s => s.name === selectedService) || ppfMasters.find(p => p.name === selectedService);
+    if (!service || !selectedVehicleType) return;
+
+    let price = 0;
+    if ("pricingByVehicleType" in service) {
+      const vPricing = (service.pricingByVehicleType as any[]).find(v => v.vehicleType === selectedVehicleType);
+      if (vPricing) {
+        if (selectedWarranty && Array.isArray(vPricing.options)) {
+          const opt = vPricing.options.find((o: any) => o.warrantyName === selectedWarranty);
+          price = opt?.price || 0;
+        } else {
+          price = vPricing.price || 0;
+        }
+      }
+    }
+
+    appendService({
+      serviceId: service.id || "",
+      serviceName: service.name,
+      vehicleType: selectedVehicleType,
+      warrantyName: selectedWarranty || undefined,
+      price: price
+    });
+
+    // Update total price
+    const currentOurPrice = form.getValues("ourPrice") || 0;
+    form.setValue("ourPrice", currentOurPrice + price);
+  };
+
+  const handleAddAccessory = () => {
+    const accessory = accessories.find(a => a.name === selectedAccessory);
+    if (!accessory) return;
+
+    appendAccessory({
+      accessoryId: accessory.id || "",
+      accessoryName: accessory.name,
+      category: accessory.category,
+      price: accessory.price
+    });
+
+    const currentOurPrice = form.getValues("ourPrice") || 0;
+    form.setValue("ourPrice", currentOurPrice + accessory.price);
+  };
 
   const filteredInquiries = useMemo(() => {
     return inquiries.filter((i) => {
@@ -143,18 +200,20 @@ export default function InquiryPage() {
     createMutation.mutate(data);
   };
 
-  // Helper for unique services in filter
   const allServiceNames = useMemo(() => {
     const names = new Set<string>();
     inquiries.forEach(i => i.services.forEach(s => names.add(s.serviceName)));
     return Array.from(names);
   }, [inquiries]);
 
+  const combinedServices = [...services, ...ppfMasters];
+
   return (
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Inquiry</h1>
+          <h1 className="text-2xl font-bold text-foreground">Tickets</h1>
+          <p className="text-sm text-muted-foreground">Manage notes and reminders linked to customers</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
@@ -186,332 +245,320 @@ export default function InquiryPage() {
               Add Inquiry
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add Inquiry</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="customerName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Customer name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Phone number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Email address (optional)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto p-0">
+            <div className="p-6 space-y-6">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">Tickets</DialogTitle>
+                <p className="text-sm text-muted-foreground">Manage notes and reminders linked to customers</p>
+              </DialogHeader>
 
-                <div className="space-y-4 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Services</h3>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => appendService({ serviceId: "", serviceName: "", vehicleType: "", price: 0 })}
-                      className="bg-red-100 text-red-600 hover:bg-red-200 border-none"
-                    >
-                      <PlusCircle className="h-4 w-4 mr-1" /> Add Service
-                    </Button>
-                  </div>
-                  {serviceFields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-slate-50 p-4 rounded-lg relative">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  {/* Basic Info */}
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">Email address (optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Email address (optional)" {...field} className="h-10" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name={`services.${index}.serviceName`}
+                        name="customerName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Service</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select Service" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {services.map(s => (
-                                  <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`services.${index}.vehicleType`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Vehicle Type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select Type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {vehicleTypes.map(v => (
-                                  <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`services.${index}.price`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price</FormLabel>
+                            <FormLabel className="text-xs text-muted-foreground font-bold uppercase">Customer Name *</FormLabel>
                             <FormControl>
-                              <Input type="number" {...field} />
+                              <Input placeholder="Customer name" {...field} className="h-10" />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button variant="ghost" size="icon" onClick={() => removeService(index)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs text-muted-foreground font-bold uppercase">Phone Number *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Phone number" {...field} className="h-10" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Service Selection Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">Service</label>
+                      <Select value={selectedService} onValueChange={setSelectedService}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select Service" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {combinedServices.map(s => (
+                            <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
+                      <Select value={selectedVehicleType} onValueChange={setSelectedVehicleType}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vehicleTypes.map(v => (
+                            <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">Warranty</label>
+                      <Select 
+                        value={selectedWarranty} 
+                        onValueChange={setSelectedWarranty}
+                        disabled={!selectedService || !ppfMasters.some(p => p.name === selectedService)}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="No Warranty Options" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedService && ppfMasters.find(p => p.name === selectedService)?.pricingByVehicleType
+                            .find(v => v.vehicleType === selectedVehicleType)?.options.map((o: any) => (
+                              <SelectItem key={o.warrantyName} value={o.warrantyName}>{o.warrantyName}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-3">
+                      <Button 
+                        type="button" 
+                        onClick={handleAddService}
+                        className="w-full h-10 bg-red-200 text-red-600 hover:bg-red-300 border-none"
+                      >
+                        Add Service
                       </Button>
                     </div>
-                  ))}
-                </div>
-
-                <div className="space-y-4 border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Accessories</h3>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => appendAccessory({ accessoryId: "", accessoryName: "", category: "", price: 0 })}
-                      className="bg-red-100 text-red-600 hover:bg-red-200 border-none"
-                    >
-                      <PlusCircle className="h-4 w-4 mr-1" /> Add Accessory
-                    </Button>
                   </div>
-                  {accessoryFields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-slate-50 p-4 rounded-lg relative">
-                      <FormField
-                        control={form.control}
-                        name={`accessories.${index}.category`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {accessoryCategories.map(c => (
-                                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`accessories.${index}.accessoryName`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Accessory</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Accessory" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {accessories.filter(a => a.category === form.watch(`accessories.${index}.category`)).map(a => (
-                                  <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`accessories.${index}.price`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <Button variant="ghost" size="icon" onClick={() => removeAccessory(index)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
+
+                  {/* Accessory Selection Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">Accessory Category</label>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Accessory Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accessoryCategories.map(c => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">Accessory Name</label>
+                      <Select value={selectedAccessory} onValueChange={setSelectedAccessory}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Accessory Name" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {accessories.filter(a => a.category === selectedCategory).map(a => (
+                            <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-3" />
+                    <div className="md:col-span-3">
+                      <Button 
+                        type="button" 
+                        onClick={handleAddAccessory}
+                        className="w-full h-10 bg-red-200 text-red-600 hover:bg-red-300 border-none"
+                      >
+                        Add Accessory
                       </Button>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Add any additional notes..." {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                  {/* Added Items Table */}
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="text-xs font-bold uppercase">Service Name</TableHead>
+                          <TableHead className="text-xs font-bold uppercase text-center">Warranty & Price</TableHead>
+                          <TableHead className="text-xs font-bold uppercase text-right">Service Price</TableHead>
+                          <TableHead className="text-xs font-bold uppercase text-center w-[200px]">Customer Price</TableHead>
+                          <TableHead className="text-xs font-bold uppercase text-center">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {serviceFields.map((field, index) => (
+                          <TableRow key={field.id}>
+                            <TableCell>
+                              <div className="font-medium text-sm">{field.serviceName}</div>
+                              <div className="text-xs text-muted-foreground">{field.vehicleType}</div>
+                            </TableCell>
+                            <TableCell className="text-center text-muted-foreground">
+                              {field.warrantyName || "—"}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-sm">
+                              ₹{field.price.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                type="text"
+                                placeholder="Enter price" 
+                                className="h-10 text-center"
+                                value={form.watch(`services.${index}.price`) === 0 ? "" : form.watch(`services.${index}.price`)}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                  form.setValue(`services.${index}.price`, val);
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="ghost" size="icon" onClick={() => removeService(index)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {accessoryFields.map((field, index) => (
+                          <TableRow key={field.id}>
+                            <TableCell>
+                              <div className="font-medium text-sm">{field.accessoryName}</div>
+                              <div className="text-xs text-muted-foreground">{field.category}</div>
+                            </TableCell>
+                            <TableCell className="text-center text-muted-foreground">—</TableCell>
+                            <TableCell className="text-right font-bold text-sm">
+                              ₹{field.price.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                type="text"
+                                placeholder="Enter price" 
+                                className="h-10 text-center"
+                                value={form.watch(`accessories.${index}.price`) === 0 ? "" : form.watch(`accessories.${index}.price`)}
+                                onChange={(e) => {
+                                  const val = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                  form.setValue(`accessories.${index}.price`, val);
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="ghost" size="icon" onClick={() => removeAccessory(index)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(serviceFields.length === 0 && accessoryFields.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground italic">
+                              No items added yet.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                   <FormField
+                  {/* Notes */}
+                  <FormField
                     control={form.control}
-                    name="ourPrice"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Our Price</FormLabel>
+                        <FormLabel className="text-xs font-bold text-muted-foreground uppercase">Notes (Optional)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Textarea 
+                            placeholder="Add any additional notes or special requests..." 
+                            {...field} 
+                            className="min-h-[100px] resize-none"
+                          />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-                   <FormField
-                    control={form.control}
-                    name="customerPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer Price</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
 
-                <div className="flex gap-4 pt-4">
-                  <Button type="submit" className="flex-1 bg-red-500 hover:bg-red-600 text-white">Save Inquiry</Button>
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setIsFormOpen(false)}>Cancel</Button>
-                </div>
-              </form>
-            </Form>
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4 border-t">
+                    <Button type="submit" className="bg-red-500 hover:bg-red-600 text-white px-8">Save Inquiry</Button>
+                    <Button type="button" variant="outline" className="px-8" onClick={() => setIsFormOpen(false)}>Cancel</Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
           </DialogContent>
         </Dialog>
 
-        <div className="space-y-4">
+        {/* Existing List UI */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredInquiries.map((inquiry) => {
             const diff = inquiry.customerPrice - inquiry.ourPrice;
             const diffPercent = inquiry.ourPrice > 0 ? (diff / inquiry.ourPrice) * 100 : 0;
             return (
-              <Card key={inquiry.id} className="overflow-hidden border-slate-200">
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div className="lg:col-span-4 space-y-4">
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer Name</p>
-                        <h3 className="text-lg font-bold text-slate-900">{inquiry.customerName}</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone Number</p>
-                          <p className="text-sm font-medium text-blue-600 flex items-center gap-2">
-                            <Phone className="h-3 w-3" /> {inquiry.phone}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
-                          <p className="text-sm font-medium text-blue-600 flex items-center gap-2">
-                            <Mail className="h-3 w-3" /> {inquiry.email || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Services Requested</p>
-                        <div className="mt-1 bg-slate-50 p-2 rounded border border-slate-100">
-                          <p className="text-sm text-slate-700">
-                            {inquiry.services.length > 0 
-                              ? inquiry.services.map(s => s.serviceName).join(", ")
-                              : "General Inquiry"}
-                          </p>
-                        </div>
-                      </div>
-                      {inquiry.notes && (
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Special Notes</p>
-                          <p className="text-sm italic text-slate-600">"{inquiry.notes}"</p>
-                        </div>
-                      )}
+              <Card key={inquiry.id} className="hover-elevate transition-all duration-200 border-slate-200">
+                <CardHeader className="p-4 bg-slate-50/50 border-b">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{inquiry.customerName}</h3>
+                      <p className="text-xs text-muted-foreground">{inquiry.inquiryId}</p>
                     </div>
-
-                    <div className="lg:col-span-8 flex flex-col justify-between">
-                      <div className="grid grid-cols-3 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Our Price</p>
-                          <p className="text-lg font-bold">₹{inquiry.ourPrice}</p>
-                        </div>
-                        <div className="border-l border-slate-200 pl-4">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer Price</p>
-                          <p className="text-lg font-bold">₹{inquiry.customerPrice}</p>
-                        </div>
-                        <div className="border-l border-slate-200 pl-4">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Difference</p>
-                          <p className={`text-lg font-bold ${diff >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            {diff >= 0 ? "+" : ""}₹{diff}
-                          </p>
-                          <p className="text-[10px] font-medium text-green-600">+{diffPercent.toFixed(1)}%</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-auto pt-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-slate-100 border-dashed">
-                        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          <span>Inquiry ID: {inquiry.inquiryId}</span>
-                          <span>Date: {format(new Date(inquiry.date), "MMMM dd, yyyy")}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white border-none h-8 px-4"><Eye className="h-3 w-3 mr-1" /> View</Button>
-                          <Button variant="outline" size="sm" className="bg-orange-500 text-white hover:bg-orange-600 hover:text-white border-none h-8 px-4"><Download className="h-3 w-3 mr-1" /> Download</Button>
-                          <Button variant="outline" size="sm" className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-none h-8 px-4"><Send className="h-3 w-3 mr-1" /> Send</Button>
-                          <Button variant="outline" size="sm" className="bg-red-600 text-white hover:bg-red-700 hover:text-white border-none h-8 px-4" onClick={() => deleteMutation.mutate(inquiry.id!)}><Trash2 className="h-3 w-3 mr-1" /> Delete</Button>
-                        </div>
-                      </div>
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase py-0 px-2 h-5 bg-white">
+                      {format(new Date(inquiry.date), "MMM dd")}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Phone</p>
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Phone className="h-3 w-3 text-blue-500" /> {inquiry.phone}
+                      </p>
                     </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Services</p>
+                      <p className="text-sm font-medium truncate">
+                        {inquiry.services.length + inquiry.accessories.length} items
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Final Price</p>
+                      <p className="text-lg font-bold">₹{inquiry.customerPrice.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Profit</p>
+                      <p className={`text-sm font-bold ${diff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        ₹{diff.toLocaleString()} ({diffPercent.toFixed(1)}%)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm" className="flex-1 h-8 text-[11px] font-bold uppercase bg-blue-50 text-blue-600 hover:bg-blue-100 border-none"><Eye className="h-3 w-3 mr-1" /> View</Button>
+                    <Button variant="outline" size="sm" className="flex-1 h-8 text-[11px] font-bold uppercase bg-red-50 text-red-600 hover:bg-red-100 border-none" onClick={() => deleteMutation.mutate(inquiry.id!)}><Trash2 className="h-3 w-3 mr-1" /> Delete</Button>
                   </div>
                 </CardContent>
               </Card>
