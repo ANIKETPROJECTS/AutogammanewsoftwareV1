@@ -134,40 +134,63 @@ export default function InquiryPage() {
 
   // Intermediate state for selection
   const [selectedService, setSelectedService] = useState("");
-  const [selectedVehicleType, setSelectedVehicleType] = useState("");
+  const [selectedServiceVehicleType, setSelectedServiceVehicleType] = useState("");
+
+  const [selectedPPF, setSelectedPPF] = useState("");
+  const [selectedPPFVehicleType, setSelectedPPFVehicleType] = useState("");
   const [selectedWarranty, setSelectedWarranty] = useState("");
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedAccessory, setSelectedAccessory] = useState("");
 
   const handleAddService = () => {
-    const service = services.find(s => s.name === selectedService) || ppfMasters.find(p => p.name === selectedService);
-    if (!service || !selectedVehicleType) return;
+    const service = services.find(s => s.name === selectedService);
+    if (!service || !selectedServiceVehicleType) return;
 
     let price = 0;
-    if ("pricingByVehicleType" in service) {
-      const vPricing = (service.pricingByVehicleType as any[]).find(v => v.vehicleType === selectedVehicleType);
-      if (vPricing) {
-        if (selectedWarranty && Array.isArray(vPricing.options)) {
-          const opt = vPricing.options.find((o: any) => o.warrantyName === selectedWarranty);
-          price = opt?.price || 0;
-        } else {
-          price = vPricing.price || 0;
-        }
-      }
+    const vPricing = service.pricingByVehicleType.find(v => v.vehicleType === selectedServiceVehicleType);
+    if (vPricing) {
+      price = vPricing.price || 0;
     }
 
     appendService({
       serviceId: service.id || "",
       serviceName: service.name,
-      vehicleType: selectedVehicleType,
-      warrantyName: selectedWarranty || undefined,
+      vehicleType: selectedServiceVehicleType,
+      warrantyName: undefined,
       price: price
     });
 
-    // Update total price
     const currentOurPrice = form.getValues("ourPrice") || 0;
     form.setValue("ourPrice", currentOurPrice + price);
+    setSelectedService("");
+    setSelectedServiceVehicleType("");
+  };
+
+  const handleAddPPF = () => {
+    const ppf = ppfMasters.find(p => p.name === selectedPPF);
+    if (!ppf || !selectedPPFVehicleType || !selectedWarranty) return;
+
+    let price = 0;
+    const vPricing = ppf.pricingByVehicleType.find(v => v.vehicleType === selectedPPFVehicleType);
+    if (vPricing) {
+      const opt = vPricing.options.find((o: any) => o.warrantyName === selectedWarranty);
+      price = opt?.price || 0;
+    }
+
+    appendService({
+      serviceId: ppf.id || "",
+      serviceName: ppf.name,
+      vehicleType: selectedPPFVehicleType,
+      warrantyName: selectedWarranty,
+      price: price
+    });
+
+    const currentOurPrice = form.getValues("ourPrice") || 0;
+    form.setValue("ourPrice", currentOurPrice + price);
+    setSelectedPPF("");
+    setSelectedPPFVehicleType("");
+    setSelectedWarranty("");
   };
 
   const handleAddAccessory = () => {
@@ -205,7 +228,6 @@ export default function InquiryPage() {
     return Array.from(names);
   }, [inquiries]);
 
-  const combinedServices = [...services, ...ppfMasters];
 
   return (
     <Layout>
@@ -309,22 +331,61 @@ export default function InquiryPage() {
 
                   {/* Service Selection Row */}
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    <div className="md:col-span-3 space-y-1.5">
+                    <div className="md:col-span-4 space-y-1.5">
                       <label className="text-xs font-bold text-muted-foreground uppercase">Service</label>
                       <Select value={selectedService} onValueChange={setSelectedService}>
                         <SelectTrigger className="h-10">
                           <SelectValue placeholder="Select Service" />
                         </SelectTrigger>
                         <SelectContent>
-                          {combinedServices.map(s => (
+                          {services.map(s => (
                             <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-4 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
+                      <Select value={selectedServiceVehicleType} onValueChange={setSelectedServiceVehicleType}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vehicleTypes.map(v => (
+                            <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-4">
+                      <Button 
+                        type="button" 
+                        onClick={handleAddService}
+                        className="w-full h-10 bg-red-200 text-red-600 hover:bg-red-300 border-none"
+                      >
+                        Add Service
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* PPF Selection Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div className="md:col-span-3 space-y-1.5">
+                      <label className="text-xs font-bold text-muted-foreground uppercase">PPF</label>
+                      <Select value={selectedPPF} onValueChange={setSelectedPPF}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select PPF" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ppfMasters.map(p => (
+                            <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="md:col-span-3 space-y-1.5">
                       <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
-                      <Select value={selectedVehicleType} onValueChange={setSelectedVehicleType}>
+                      <Select value={selectedPPFVehicleType} onValueChange={setSelectedPPFVehicleType}>
                         <SelectTrigger className="h-10">
                           <SelectValue placeholder="Select Type" />
                         </SelectTrigger>
@@ -340,14 +401,14 @@ export default function InquiryPage() {
                       <Select 
                         value={selectedWarranty} 
                         onValueChange={setSelectedWarranty}
-                        disabled={!selectedService || !ppfMasters.some(p => p.name === selectedService)}
+                        disabled={!selectedPPF || !selectedPPFVehicleType}
                       >
                         <SelectTrigger className="h-10">
-                          <SelectValue placeholder="No Warranty Options" />
+                          <SelectValue placeholder="Select Warranty" />
                         </SelectTrigger>
                         <SelectContent>
-                          {selectedService && ppfMasters.find(p => p.name === selectedService)?.pricingByVehicleType
-                            .find(v => v.vehicleType === selectedVehicleType)?.options.map((o: any) => (
+                          {selectedPPF && selectedPPFVehicleType && ppfMasters.find(p => p.name === selectedPPF)?.pricingByVehicleType
+                            .find(v => v.vehicleType === selectedPPFVehicleType)?.options.map((o: any) => (
                               <SelectItem key={o.warrantyName} value={o.warrantyName}>{o.warrantyName}</SelectItem>
                             ))}
                         </SelectContent>
@@ -356,10 +417,10 @@ export default function InquiryPage() {
                     <div className="md:col-span-3">
                       <Button 
                         type="button" 
-                        onClick={handleAddService}
+                        onClick={handleAddPPF}
                         className="w-full h-10 bg-red-200 text-red-600 hover:bg-red-300 border-none"
                       >
-                        Add Service
+                        Add PPF
                       </Button>
                     </div>
                   </div>
