@@ -10,7 +10,9 @@ import {
   accessoryMasterSchema,
   insertAccessoryMasterSchema,
   accessoryCategorySchema,
-  vehicleTypeSchema 
+  vehicleTypeSchema,
+  technicianSchema,
+  insertTechnicianSchema
 } from "./schema";
 
 export const api = {
@@ -201,6 +203,40 @@ export const api = {
           200: z.void(),
           404: z.object({ message: z.string() }),
         },
+      },
+    },
+  },
+  technicians: {
+    list: {
+      method: "GET" as const,
+      path: "/api/technicians",
+      responses: {
+        200: z.array(technicianSchema),
+      },
+    },
+    create: {
+      method: "POST" as const,
+      path: "/api/technicians",
+      input: insertTechnicianSchema,
+      responses: {
+        201: technicianSchema,
+      },
+    },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/technicians/:id",
+      input: technicianSchema.partial(),
+      responses: {
+        200: technicianSchema,
+        404: z.object({ message: z.string() }),
+      },
+    },
+    delete: {
+      method: "DELETE" as const,
+      path: "/api/technicians/:id",
+      responses: {
+        200: z.void(),
+        404: z.object({ message: z.string() }),
       },
     },
   },

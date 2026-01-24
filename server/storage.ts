@@ -10,7 +10,9 @@ import {
   AccessoryMaster,
   InsertAccessoryMaster,
   AccessoryCategory,
-  VehicleType 
+  VehicleType,
+  Technician,
+  InsertTechnician
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -74,6 +76,15 @@ const accessoryMasterSchema = new mongoose.Schema({
 
 export const AccessoryMasterModel = mongoose.model("AccessoryMaster", accessoryMasterSchema);
 
+const technicianMongoSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  specialty: { type: String, required: true },
+  phone: { type: String },
+  status: { type: String, enum: ["active", "inactive"], default: "active" }
+});
+
+export const TechnicianModel = mongoose.model("Technician", technicianMongoSchema);
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -104,6 +115,12 @@ export interface IStorage {
   createAccessoryCategory(name: string): Promise<AccessoryCategory>;
   updateAccessoryCategory(id: string, name: string): Promise<AccessoryCategory | undefined>;
   deleteAccessoryCategory(id: string): Promise<boolean>;
+
+  // Technicians
+  getTechnicians(): Promise<Technician[]>;
+  createTechnician(technician: InsertTechnician): Promise<Technician>;
+  updateTechnician(id: string, technician: Partial<Technician>): Promise<Technician | undefined>;
+  deleteTechnician(id: string): Promise<boolean>;
 
   sessionStore: session.Store;
 }
@@ -337,6 +354,46 @@ export class MongoStorage implements IStorage {
 
   async deleteAccessoryCategory(id: string): Promise<boolean> {
     const result = await AccessoryCategoryModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  async getTechnicians(): Promise<Technician[]> {
+    const technicians = await TechnicianModel.find();
+    return technicians.map(t => ({
+      id: t._id.toString(),
+      name: t.name,
+      specialty: t.specialty,
+      phone: t.phone || undefined,
+      status: t.status as "active" | "inactive"
+    }));
+  }
+
+  async createTechnician(technician: InsertTechnician): Promise<Technician> {
+    const t = new TechnicianModel(technician);
+    await t.save();
+    return {
+      id: t._id.toString(),
+      name: t.name,
+      specialty: t.specialty,
+      phone: t.phone || undefined,
+      status: t.status as "active" | "inactive"
+    };
+  }
+
+  async updateTechnician(id: string, technician: Partial<Technician>): Promise<Technician | undefined> {
+    const t = await TechnicianModel.findByIdAndUpdate(id, technician, { new: true });
+    if (!t) return undefined;
+    return {
+      id: t._id.toString(),
+      name: t.name,
+      specialty: t.specialty,
+      phone: t.phone || undefined,
+      status: t.status as "active" | "inactive"
+    };
+  }
+
+  async deleteTechnician(id: string): Promise<boolean> {
+    const result = await TechnicianModel.findByIdAndDelete(id);
     return !!result;
   }
 }

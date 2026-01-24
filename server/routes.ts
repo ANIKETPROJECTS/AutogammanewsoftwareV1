@@ -209,6 +209,38 @@ export async function registerRoutes(
     }
   });
 
+  // Technician Routes
+  app.get(api.technicians.list.path, async (req, res) => {
+    const technicians = await storage.getTechnicians();
+    res.json(technicians);
+  });
+
+  app.post(api.technicians.create.path, async (req, res) => {
+    try {
+      const input = api.technicians.create.input.parse(req.body);
+      const technician = await storage.createTechnician(input);
+      res.status(201).json(technician);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/technicians/:id", async (req, res) => {
+    try {
+      const technician = await storage.updateTechnician(req.params.id, req.body);
+      if (!technician) return res.status(404).json({ message: "Technician not found" });
+      res.json(technician);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/technicians/:id", async (req, res) => {
+    const success = await storage.deleteTechnician(req.params.id);
+    if (!success) return res.status(404).json({ message: "Technician not found" });
+    res.json({ message: "Technician deleted" });
+  });
+
   // Seed default user if not exists
   if (mongoose.connection.readyState === 1) {
     const defaultEmail = "Autogarage@system.com";

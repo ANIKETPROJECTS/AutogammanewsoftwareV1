@@ -123,3 +123,16 @@ export const accessoryMasterSchema = z.object({
 export type AccessoryMaster = z.infer<typeof accessoryMasterSchema>;
 export const insertAccessoryMasterSchema = accessoryMasterSchema.omit({ id: true });
 export type InsertAccessoryMaster = z.infer<typeof insertAccessoryMasterSchema>;
+
+// Technician Schemas
+export const technicianSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1),
+  specialty: z.string().min(1),
+  phone: z.string().optional(),
+  status: z.enum(["active", "inactive"]).default("active"),
+});
+
+export type Technician = z.infer<typeof technicianSchema>;
+export const insertTechnicianSchema = technicianSchema.omit({ id: true });
+export type InsertTechnician = z.infer<typeof insertTechnicianSchema>;

@@ -8,6 +8,7 @@ import LoginPage from "@/pages/login";
 import DashboardPage from "@/pages/dashboard";
 import MastersPage from "@/pages/masters";
 import AccessoryCategoryDetail from "@/pages/accessory-category-detail";
+import TechniciansPage from "@/pages/technicians";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -65,7 +66,7 @@ function Router() {
       <Route path="/job-cards"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/add-job"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/invoice"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/technicians"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/technicians"><ProtectedRoute component={TechniciansPage} /></Route>
       <Route path="/appointments"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/tickets"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/masters">
