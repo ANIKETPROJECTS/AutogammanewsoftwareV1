@@ -11,6 +11,7 @@ import MastersPage from "@/pages/masters";
 import AccessoryCategoryDetail from "@/pages/accessory-category-detail";
 import TechniciansPage from "@/pages/technicians";
 import SettingsPage from "@/pages/settings";
+import InquiryPage from "@/pages/inquiry";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -63,8 +64,9 @@ function Router() {
         <ProtectedRoute component={DashboardPage} />
       </Route>
 
-      {/* Redirect placeholder routes to dashboard for now */}
-      <Route path="/inquiry"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/inquiry">
+        <ProtectedRoute component={InquiryPage} />
+      </Route>
       <Route path="/job-cards"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/add-job"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/invoice"><ProtectedRoute component={DashboardPage} /></Route>

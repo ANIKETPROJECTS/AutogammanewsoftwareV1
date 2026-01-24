@@ -14,7 +14,9 @@ import {
   Technician,
   InsertTechnician,
   Appointment,
-  InsertAppointment
+  InsertAppointment,
+  Inquiry,
+  InsertInquiry
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -100,6 +102,32 @@ const appointmentSchema = new mongoose.Schema({
 
 export const AppointmentModel = mongoose.model("Appointment", appointmentSchema);
 
+const inquiryMongoSchema = new mongoose.Schema({
+  customerName: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String },
+  services: [{
+    serviceId: String,
+    serviceName: String,
+    vehicleType: String,
+    warrantyName: String,
+    price: Number
+  }],
+  accessories: [{
+    accessoryId: String,
+    accessoryName: String,
+    category: String,
+    price: Number
+  }],
+  notes: { type: String },
+  ourPrice: { type: Number, default: 0 },
+  customerPrice: { type: Number, default: 0 },
+  date: { type: String, required: true },
+  inquiryId: { type: String, required: true }
+});
+
+export const InquiryModel = mongoose.model("Inquiry", inquiryMongoSchema);
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -145,6 +173,11 @@ export interface IStorage {
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, appointment: Partial<Appointment>): Promise<Appointment | undefined>;
   deleteAppointment(id: string): Promise<boolean>;
+
+  // Inquiries
+  getInquiries(): Promise<Inquiry[]>;
+  createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
+  deleteInquiry(id: string): Promise<boolean>;
 
   sessionStore: session.Store;
 }
@@ -480,6 +513,46 @@ export class MongoStorage implements IStorage {
 
   async deleteAppointment(id: string): Promise<boolean> {
     const result = await AppointmentModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  async getInquiries(): Promise<Inquiry[]> {
+    const inquiries = await InquiryModel.find();
+    return inquiries.map(i =&gt; ({
+      id: i._id.toString(),
+      customerName: i.customerName,
+      phone: i.phone,
+      email: i.email || undefined,
+      services: i.services as any,
+      accessories: i.accessories as any,
+      notes: i.notes || undefined,
+      ourPrice: i.ourPrice,
+      customerPrice: i.customerPrice,
+      date: i.date,
+      inquiryId: i.inquiryId
+    }));
+  }
+
+  async createInquiry(inquiry: InsertInquiry): Promise<Inquiry> {
+    const i = new InquiryModel(inquiry);
+    await i.save();
+    return {
+      id: i._id.toString(),
+      customerName: i.customerName,
+      phone: i.phone,
+      email: i.email || undefined,
+      services: i.services as any,
+      accessories: i.accessories as any,
+      notes: i.notes || undefined,
+      ourPrice: i.ourPrice,
+      customerPrice: i.customerPrice,
+      date: i.date,
+      inquiryId: i.inquiryId
+    };
+  }
+
+  async deleteInquiry(id: string): Promise<boolean> {
+    const result = await InquiryModel.findByIdAndDelete(id);
     return !!result;
   }
 }
