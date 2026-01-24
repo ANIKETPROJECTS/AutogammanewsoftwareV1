@@ -136,3 +136,23 @@ export const technicianSchema = z.object({
 export type Technician = z.infer<typeof technicianSchema>;
 export const insertTechnicianSchema = technicianSchema.omit({ id: true });
 export type InsertTechnician = z.infer<typeof insertTechnicianSchema>;
+
+// Appointment Schemas
+export const appointmentStatusSchema = z.enum(["SCHEDULED", "DONE", "CANCELLED"]);
+export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>;
+
+export const appointmentSchema = z.object({
+  id: z.string().optional(),
+  customerName: z.string().min(1),
+  phone: z.string().min(10),
+  vehicleInfo: z.string().min(1),
+  serviceType: z.string().min(1),
+  date: z.string(), // ISO string or YYYY-MM-DD
+  time: z.string(), // HH:mm
+  status: appointmentStatusSchema.default("SCHEDULED"),
+  cancelReason: z.string().optional(),
+});
+
+export type Appointment = z.infer<typeof appointmentSchema>;
+export const insertAppointmentSchema = appointmentSchema.omit({ id: true, status: true, cancelReason: true });
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;

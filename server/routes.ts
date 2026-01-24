@@ -241,6 +241,38 @@ export async function registerRoutes(
     res.json({ message: "Technician deleted" });
   });
 
+  // Appointment Routes
+  app.get(api.appointments.list.path, async (req, res) => {
+    const appointments = await storage.getAppointments();
+    res.json(appointments);
+  });
+
+  app.post(api.appointments.create.path, async (req, res) => {
+    try {
+      const input = api.appointments.create.input.parse(req.body);
+      const appointment = await storage.createAppointment(input);
+      res.status(201).json(appointment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/appointments/:id", async (req, res) => {
+    try {
+      const appointment = await storage.updateAppointment(req.params.id, req.body);
+      if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+      res.json(appointment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/appointments/:id", async (req, res) => {
+    const success = await storage.deleteAppointment(req.params.id);
+    if (!success) return res.status(404).json({ message: "Appointment not found" });
+    res.json({ message: "Appointment deleted" });
+  });
+
   // Seed default user if not exists
   if (mongoose.connection.readyState === 1) {
     const defaultEmail = "Autogarage@system.com";

@@ -240,4 +240,38 @@ export const api = {
       },
     },
   },
+  appointments: {
+    list: {
+      method: "GET" as const,
+      path: "/api/appointments",
+      responses: {
+        200: z.array(appointmentSchema),
+      },
+    },
+    create: {
+      method: "POST" as const,
+      path: "/api/appointments",
+      input: insertAppointmentSchema,
+      responses: {
+        201: appointmentSchema,
+      },
+    },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/appointments/:id",
+      input: appointmentSchema.partial(),
+      responses: {
+        200: appointmentSchema,
+        404: z.object({ message: z.string() }),
+      },
+    },
+    delete: {
+      method: "DELETE" as const,
+      path: "/api/appointments/:id",
+      responses: {
+        200: z.void(),
+        404: z.object({ message: z.string() }),
+      },
+    },
+  },
 };

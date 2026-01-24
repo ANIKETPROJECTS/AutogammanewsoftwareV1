@@ -12,7 +12,9 @@ import {
   AccessoryCategory,
   VehicleType,
   Technician,
-  InsertTechnician
+  InsertTechnician,
+  Appointment,
+  InsertAppointment
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -85,6 +87,19 @@ const technicianMongoSchema = new mongoose.Schema({
 
 export const TechnicianModel = mongoose.model("Technician", technicianMongoSchema);
 
+const appointmentSchema = new mongoose.Schema({
+  customerName: { type: String, required: true },
+  phone: { type: String, required: true },
+  vehicleInfo: { type: String, required: true },
+  serviceType: { type: String, required: true },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  status: { type: String, enum: ["SCHEDULED", "DONE", "CANCELLED"], default: "SCHEDULED" },
+  cancelReason: { type: String },
+});
+
+export const AppointmentModel = mongoose.model("Appointment", appointmentSchema);
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -121,6 +136,12 @@ export interface IStorage {
   createTechnician(technician: InsertTechnician): Promise<Technician>;
   updateTechnician(id: string, technician: Partial<Technician>): Promise<Technician | undefined>;
   deleteTechnician(id: string): Promise<boolean>;
+
+  // Appointments
+  getAppointments(): Promise<Appointment[]>;
+  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  updateAppointment(id: string, appointment: Partial<Appointment>): Promise<Appointment | undefined>;
+  deleteAppointment(id: string): Promise<boolean>;
 
   sessionStore: session.Store;
 }
@@ -394,6 +415,57 @@ export class MongoStorage implements IStorage {
 
   async deleteTechnician(id: string): Promise<boolean> {
     const result = await TechnicianModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  async getAppointments(): Promise<Appointment[]> {
+    const appointments = await AppointmentModel.find();
+    return appointments.map(a => ({
+      id: a._id.toString(),
+      customerName: a.customerName,
+      phone: a.phone,
+      vehicleInfo: a.vehicleInfo,
+      serviceType: a.serviceType,
+      date: a.date,
+      time: a.time,
+      status: a.status as any,
+      cancelReason: a.cancelReason || undefined
+    }));
+  }
+
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const a = new AppointmentModel(appointment);
+    await a.save();
+    return {
+      id: a._id.toString(),
+      customerName: a.customerName,
+      phone: a.phone,
+      vehicleInfo: a.vehicleInfo,
+      serviceType: a.serviceType,
+      date: a.date,
+      time: a.time,
+      status: a.status as any
+    };
+  }
+
+  async updateAppointment(id: string, appointment: Partial<Appointment>): Promise<Appointment | undefined> {
+    const a = await AppointmentModel.findByIdAndUpdate(id, appointment, { new: true });
+    if (!a) return undefined;
+    return {
+      id: a._id.toString(),
+      customerName: a.customerName,
+      phone: a.phone,
+      vehicleInfo: a.vehicleInfo,
+      serviceType: a.serviceType,
+      date: a.date,
+      time: a.time,
+      status: a.status as any,
+      cancelReason: a.cancelReason || undefined
+    };
+  }
+
+  async deleteAppointment(id: string): Promise<boolean> {
+    const result = await AppointmentModel.findByIdAndDelete(id);
     return !!result;
   }
 }

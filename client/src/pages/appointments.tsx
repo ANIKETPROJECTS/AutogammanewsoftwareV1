@@ -1,0 +1,418 @@
+import { useState, useMemo } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { api } from "@shared/routes";
+import { Appointment, InsertAppointment, AppointmentStatus } from "@shared/schema";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Layout } from "@/components/layout/layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertAppointmentSchema } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { Calendar as CalendarIcon, MoreHorizontal, Search, Trash2, CheckCircle2, XCircle, Clock, Plus } from "lucide-react";
+import { format, parseISO } from "date-fns";
+
+export default function AppointmentsPage() {
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [sortOrder, setSortOrder] = useState<"OLDEST" | "NEWEST">("OLDEST");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
+    queryKey: [api.appointments.list.path],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertAppointment) => {
+      const res = await apiRequest(api.appointments.create.method, api.appointments.create.path, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      setIsFormOpen(false);
+      toast({ title: "Appointment booked successfully" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Appointment> }) => {
+      const res = await apiRequest("PATCH", `/api/appointments/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      toast({ title: "Appointment updated" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/appointments/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      toast({ title: "Appointment deleted" });
+    },
+  });
+
+  const filteredAppointments = useMemo(() => {
+    return appointments
+      .filter((a) => {
+        const matchesSearch =
+          a.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          a.phone.includes(searchTerm);
+        const matchesStatus = statusFilter === "ALL" || a.status === statusFilter;
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.time}`).getTime();
+        const dateB = new Date(`${b.date}T${b.time}`).getTime();
+        return sortOrder === "OLDEST" ? dateA - dateB : dateB - dateA;
+      });
+  }, [appointments, searchTerm, statusFilter, sortOrder]);
+
+  const form = useForm<InsertAppointment>({
+    resolver: zodResolver(insertAppointmentSchema),
+    defaultValues: {
+      customerName: "",
+      phone: "",
+      vehicleInfo: "",
+      serviceType: "",
+      date: format(new Date(), "yyyy-MM-dd"),
+      time: "09:00",
+    },
+  });
+
+  const onSubmit = (data: InsertAppointment) => {
+    createMutation.mutate(data);
+  };
+
+  const getStatusBadge = (status: AppointmentStatus, reason?: string) => {
+    switch (status) {
+      case "DONE":
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">DONE</Badge>;
+      case "CANCELLED":
+        return (
+          <div className="flex flex-col">
+            <Badge variant="destructive" className="w-fit">CANCELLED</Badge>
+            {reason && <span className="text-[10px] text-destructive italic mt-0.5">Reason: {reason}</span>}
+          </div>
+        );
+      default:
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">SCHEDULED</Badge>;
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Appointments</h1>
+          <p className="text-muted-foreground text-sm">Manage notes and reminders linked to customers</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or phone number..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Status Filter</label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                <SelectItem value="DONE">Done</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              </SelectContent>
+            </+Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Sort by Date</label>
+            <Select value={sortOrder} onValueChange={(v: any) => setSortOrder(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Oldest First" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="OLDEST">Oldest First</SelectItem>
+                <SelectItem value="NEWEST">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div>
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-red-500 hover:bg-red-600 text-white font-semibold">
+                Book Appointment
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Book Appointment</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="customerName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Customer Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="9876543210" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="vehicleInfo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vehicle Info *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Toyota Fortuner" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="serviceType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Service Type *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="General Service" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date *</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="time"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Time *</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex gap-4 pt-4">
+                    <Button 
+                      type="submit" 
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                      disabled={createMutation.isPending}
+                    >
+                      Book Appointment
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setIsFormOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader className="bg-slate-400">
+              <TableRow>
+                <TableHead className="text-white font-semibold">Customer</TableHead>
+                <TableHead className="text-white font-semibold">Phone</TableHead>
+                <TableHead className="text-white font-semibold">Vehicle</TableHead>
+                <TableHead className="text-white font-semibold">Service</TableHead>
+                <TableHead className="text-white font-semibold">Date</TableHead>
+                <TableHead className="text-white font-semibold">Time</TableHead>
+                <TableHead className="text-white font-semibold">Status</TableHead>
+                <TableHead className="text-white font-semibold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    Loading appointments...
+                  </TableCell>
+                </TableRow>
+              ) : filteredAppointments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    No appointments found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAppointments.map((a) => (
+                  <TableRow key={a.id} className="group hover:bg-slate-50 transition-colors">
+                    <TableCell className="font-medium text-slate-900">{a.customerName}</TableCell>
+                    <TableCell className="text-slate-600">{a.phone}</TableCell>
+                    <TableCell className="text-slate-600">{a.vehicleInfo}</TableCell>
+                    <TableCell className="text-slate-600">{a.serviceType}</TableCell>
+                    <TableCell className="text-slate-600">
+                      {format(parseISO(a.date), "MMM dd, yyyy")}
+                    </TableCell>
+                    <TableCell className="text-slate-600 font-medium">{a.time}</TableCell>
+                    <TableCell>{getStatusBadge(a.status, a.cancelReason)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {a.status === "SCHEDULED" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-8 border-slate-300">
+                                Options
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                className="flex items-center gap-2 cursor-pointer"
+                                onClick={() => {
+                                  // Reschedule - just re-open form with data would be ideal, but for now just Toast
+                                  toast({ title: "Reschedule functionality coming soon" });
+                                }}
+                              >
+                                <Clock className="h-4 w-4" /> Reschedule
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
+                                onClick={() => {
+                                  const reason = prompt("Enter cancellation reason:");
+                                  if (reason !== null) {
+                                    updateMutation.mutate({ 
+                                      id: a.id!, 
+                                      data: { status: "CANCELLED", cancelReason: reason } 
+                                    });
+                                  }
+                                }}
+                              >
+                                <XCircle className="h-4 w-4" /> Cancel
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="flex items-center gap-2 text-green-600 focus:text-green-600 cursor-pointer"
+                                onClick={() => updateMutation.mutate({ id: a.id!, data: { status: "DONE" } })}
+                              >
+                                <CheckCircle2 className="h-4 w-4" /> Mark Done
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            if (confirm("Are you sure you want to delete this appointment?")) {
+                              deleteMutation.mutate(a.id!);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </Layout>
+  );
+}

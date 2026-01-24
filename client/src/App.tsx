@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import DashboardPage from "@/pages/dashboard";
+import AppointmentsPage from "@/pages/appointments";
 import MastersPage from "@/pages/masters";
 import AccessoryCategoryDetail from "@/pages/accessory-category-detail";
 import TechniciansPage from "@/pages/technicians";
@@ -67,7 +68,7 @@ function Router() {
       <Route path="/add-job"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/invoice"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/technicians"><ProtectedRoute component={TechniciansPage} /></Route>
-      <Route path="/appointments"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/appointments"><ProtectedRoute component={AppointmentsPage} /></Route>
       <Route path="/tickets"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/masters">
         <ProtectedRoute component={MastersPage} />
