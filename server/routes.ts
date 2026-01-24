@@ -59,7 +59,20 @@ export async function registerRoutes(
     const user = await storage.getUser(userId);
     if (!user) return res.sendStatus(401);
 
-    res.json({ id: user.id, email: user.email });
+    res.json({ id: user.id, email: user.email, name: user.name });
+  });
+
+  app.patch("/api/user", async (req, res) => {
+    const userId = (req.session as any).userId;
+    if (!userId) return res.sendStatus(401);
+
+    try {
+      const user = await storage.updateUser(userId, req.body);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      res.json({ id: user.id, email: user.email, name: user.name });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
   });
 
   // Dashboard Route

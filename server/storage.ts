@@ -137,6 +137,9 @@ export interface IStorage {
   updateTechnician(id: string, technician: Partial<Technician>): Promise<Technician | undefined>;
   deleteTechnician(id: string): Promise<boolean>;
 
+  // User
+  updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
+
   // Appointments
   getAppointments(): Promise<Appointment[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
@@ -181,6 +184,17 @@ export class MongoStorage implements IStorage {
     const user = new UserModel(insertUser);
     await user.save();
     return { id: user._id.toString(), email: user.email, password: user.password };
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
+    const user = await UserModel.findByIdAndUpdate(id, data, { new: true });
+    if (!user) return undefined;
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      password: user.password as string | undefined,
+      name: user.name as string | undefined
+    };
   }
 
   async getDashboardData(): Promise<DashboardData> {
