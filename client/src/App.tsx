@@ -10,6 +10,7 @@ import AppointmentsPage from "@/pages/appointments";
 import MastersPage from "@/pages/masters";
 import AccessoryCategoryDetail from "@/pages/accessory-category-detail";
 import TechniciansPage from "@/pages/technicians";
+import SettingsPage from "@/pages/settings";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -76,7 +77,9 @@ function Router() {
       <Route path="/masters/accessory-category/:id">
         <ProtectedRoute component={AccessoryCategoryDetail} />
       </Route>
-      <Route path="/settings"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/settings">
+        <ProtectedRoute component={SettingsPage} />
+      </Route>
 
       <Route component={NotFound} />
     </Switch>

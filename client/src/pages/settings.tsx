@@ -17,7 +17,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { User, Shield, Mail, User as UserIcon, Save } from "lucide-react";
+import { User as UserType, Shield, Mail, User as UserIcon, Save } from "lucide-react";
 
 const settingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
