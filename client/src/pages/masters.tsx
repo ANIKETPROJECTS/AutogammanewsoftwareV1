@@ -22,6 +22,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
+import { Link } from "wouter";
+
 export default function MastersPage() {
   const { toast } = useToast();
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
@@ -308,47 +310,12 @@ export default function MastersPage() {
 
           <TabsContent value="accessories" className="space-y-6">
             <div className="flex justify-end gap-3">
-              <Dialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <LayoutGrid className="h-4 w-4" />
-                    Manage Categories
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Manage Accessory Categories</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="Category Name" 
-                        value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
-                      />
-                      <Button onClick={() => createCategoryMutation.mutate(newCategoryName)}>Add</Button>
-                    </div>
-                    <div className="space-y-2">
-                      {accessoryCategories.map((cat) => (
-                        <div key={cat.id} className="flex items-center justify-between p-2 border rounded-md">
-                          <span>{cat.name}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => {
-                              if (confirm("Are you sure? This may affect existing accessories.")) {
-                                deleteCategoryMutation.mutate(cat.id!);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Link href="/masters/accessory-category/manage">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  Manage Categories
+                </Button>
+              </Link>
 
               <Dialog open={isAddAccessoryOpen} onOpenChange={setIsAddAccessoryOpen}>
                 <DialogTrigger asChild>

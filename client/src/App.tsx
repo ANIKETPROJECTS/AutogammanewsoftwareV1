@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import DashboardPage from "@/pages/dashboard";
 import MastersPage from "@/pages/masters";
+import AccessoryCategoryDetail from "@/pages/accessory-category-detail";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -69,6 +70,9 @@ function Router() {
       <Route path="/tickets"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/masters">
         <ProtectedRoute component={MastersPage} />
+      </Route>
+      <Route path="/masters/accessory-category/:id">
+        <ProtectedRoute component={AccessoryCategoryDetail} />
       </Route>
       <Route path="/settings"><ProtectedRoute component={DashboardPage} /></Route>
 
