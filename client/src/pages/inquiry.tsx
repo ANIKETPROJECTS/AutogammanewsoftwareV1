@@ -64,6 +64,8 @@ export default function InquiryPage() {
   const [serviceFilter, setServiceFilter] = useState("ALL");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  const [viewingInquiry, setViewingInquiry] = useState<Inquiry | null>(null);
+
   // Queries
   const { data: inquiries = [], isLoading } = useQuery<Inquiry[]>({
     queryKey: ["/api/inquiries"],
@@ -163,6 +165,8 @@ export default function InquiryPage() {
 
     const currentOurPrice = form.getValues("ourPrice") || 0;
     form.setValue("ourPrice", currentOurPrice + price);
+    const currentCustomerPrice = form.getValues("customerPrice") || 0;
+    form.setValue("customerPrice", currentCustomerPrice + price);
     setSelectedService("");
     setSelectedServiceVehicleType("");
   };
@@ -188,6 +192,8 @@ export default function InquiryPage() {
 
     const currentOurPrice = form.getValues("ourPrice") || 0;
     form.setValue("ourPrice", currentOurPrice + price);
+    const currentCustomerPrice = form.getValues("customerPrice") || 0;
+    form.setValue("customerPrice", currentCustomerPrice + price);
     setSelectedPPF("");
     setSelectedPPFVehicleType("");
     setSelectedWarranty("");
@@ -206,6 +212,8 @@ export default function InquiryPage() {
 
     const currentOurPrice = form.getValues("ourPrice") || 0;
     form.setValue("ourPrice", currentOurPrice + accessory.price);
+    const currentCustomerPrice = form.getValues("customerPrice") || 0;
+    form.setValue("customerPrice", currentCustomerPrice + accessory.price);
   };
 
   const filteredInquiries = useMemo(() => {
@@ -697,7 +705,12 @@ export default function InquiryPage() {
                           <span>Date: {format(new Date(inquiry.date), "MMMM dd, yyyy")}</span>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none h-9 text-xs font-bold uppercase">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none h-9 text-xs font-bold uppercase"
+                            onClick={() => setViewingInquiry(inquiry)}
+                          >
                             View
                           </Button>
                           <Button variant="outline" size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white border-none h-9 text-xs font-bold uppercase">
@@ -723,6 +736,94 @@ export default function InquiryPage() {
             );
           })}
         </div>
+
+        {/* View Inquiry Dialog */}
+        <Dialog open={!!viewingInquiry} onOpenChange={(open) => !open && setViewingInquiry(null)}>
+          <DialogContent className="max-w-3xl p-0">
+            <div className="p-6 space-y-6">
+              <div className="flex justify-between items-center">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Inquiry Details</DialogTitle>
+                </DialogHeader>
+              </div>
+
+              {viewingInquiry && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Name</p>
+                      <p className="text-sm font-bold">{viewingInquiry.customerName}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Phone</p>
+                      <p className="text-sm font-bold">{viewingInquiry.phone}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Email</p>
+                      <p className="text-sm font-bold">{viewingInquiry.email || "N/A"}</p>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="text-[10px] font-bold uppercase">Service Name</TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase text-right">Service Price</TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase text-right">Customer Price</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {viewingInquiry.services.map((s, idx) => (
+                          <TableRow key={`s-${idx}`}>
+                            <TableCell className="text-sm">
+                              {s.serviceName}
+                              <div className="text-[10px] text-muted-foreground">{s.vehicleType}</div>
+                            </TableCell>
+                            <TableCell className="text-right text-sm">₹{s.price.toLocaleString()}</TableCell>
+                            <TableCell className="text-right text-sm font-bold">₹{s.price.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                        {viewingInquiry.accessories.map((a, idx) => (
+                          <TableRow key={`a-${idx}`}>
+                            <TableCell className="text-sm">{a.accessoryName}</TableCell>
+                            <TableCell className="text-right text-sm">₹{a.price.toLocaleString()}</TableCell>
+                            <TableCell className="text-right text-sm font-bold">₹{a.price.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Our Price</p>
+                      <p className="text-lg font-bold">₹{viewingInquiry.ourPrice.toLocaleString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Customer Price</p>
+                      <p className="text-lg font-bold">₹{viewingInquiry.customerPrice.toLocaleString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Difference</p>
+                      <p className={`text-lg font-bold ${viewingInquiry.customerPrice - viewingInquiry.ourPrice >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {viewingInquiry.customerPrice - viewingInquiry.ourPrice >= 0 ? "+" : ""}
+                        ₹{(viewingInquiry.customerPrice - viewingInquiry.ourPrice).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Notes</p>
+                    <div className="bg-slate-50 p-3 rounded-md border border-slate-100 text-sm">
+                      {viewingInquiry.notes || "No notes"}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
