@@ -225,7 +225,17 @@ export default function AppointmentsPage() {
                         <FormItem>
                           <FormLabel>Phone *</FormLabel>
                           <FormControl>
-                            <Input placeholder="9876543210" {...field} />
+                            <Input 
+                              placeholder="9876543210" 
+                              {...field} 
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                field.onChange(value);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

@@ -144,7 +144,7 @@ export type AppointmentStatus = z.infer<typeof appointmentStatusSchema>;
 export const appointmentSchema = z.object({
   id: z.string().optional(),
   customerName: z.string().min(1),
-  phone: z.string().min(10),
+  phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
   vehicleInfo: z.string().min(1),
   serviceType: z.string().min(1),
   date: z.string(), // ISO string or YYYY-MM-DD
