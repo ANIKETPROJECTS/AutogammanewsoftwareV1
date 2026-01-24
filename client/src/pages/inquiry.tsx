@@ -160,7 +160,8 @@ export default function InquiryPage() {
       serviceName: service.name,
       vehicleType: selectedServiceVehicleType,
       warrantyName: undefined,
-      price: price
+      price: price,
+      customerPrice: price
     });
 
     const currentOurPrice = form.getValues("ourPrice") || 0;
@@ -187,7 +188,8 @@ export default function InquiryPage() {
       serviceName: ppf.name,
       vehicleType: selectedPPFVehicleType,
       warrantyName: selectedWarranty,
-      price: price
+      price: price,
+      customerPrice: price
     });
 
     const currentOurPrice = form.getValues("ourPrice") || 0;
@@ -207,7 +209,8 @@ export default function InquiryPage() {
       accessoryId: accessory.id || "",
       accessoryName: accessory.name,
       category: accessory.category,
-      price: accessory.price
+      price: accessory.price,
+      customerPrice: accessory.price
     });
 
     const currentOurPrice = form.getValues("ourPrice") || 0;
@@ -529,10 +532,18 @@ export default function InquiryPage() {
                                 type="text"
                                 placeholder="Enter price" 
                                 className="h-10 text-center"
-                                value={form.watch(`services.${index}.price`) === 0 ? "" : form.watch(`services.${index}.price`)}
+                                value={form.watch(`services.${index}.customerPrice`) === 0 ? "" : form.watch(`services.${index}.customerPrice`)}
                                 onChange={(e) => {
                                   const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                                  form.setValue(`services.${index}.price`, val);
+                                  form.setValue(`services.${index}.customerPrice`, val);
+                                  
+                                  // Recalculate total customer price
+                                  const services = form.getValues("services");
+                                  const accessories = form.getValues("accessories");
+                                  const totalCustomerPrice = 
+                                    services.reduce((acc, s) => acc + (s.customerPrice || 0), 0) +
+                                    accessories.reduce((acc, a) => acc + (a.customerPrice || 0), 0);
+                                  form.setValue("customerPrice", totalCustomerPrice);
                                 }}
                               />
                             </TableCell>
@@ -558,10 +569,18 @@ export default function InquiryPage() {
                                 type="text"
                                 placeholder="Enter price" 
                                 className="h-10 text-center"
-                                value={form.watch(`accessories.${index}.price`) === 0 ? "" : form.watch(`accessories.${index}.price`)}
+                                value={form.watch(`accessories.${index}.customerPrice`) === 0 ? "" : form.watch(`accessories.${index}.customerPrice`)}
                                 onChange={(e) => {
                                   const val = e.target.value === "" ? 0 : parseInt(e.target.value);
-                                  form.setValue(`accessories.${index}.price`, val);
+                                  form.setValue(`accessories.${index}.customerPrice`, val);
+
+                                  // Recalculate total customer price
+                                  const services = form.getValues("services");
+                                  const accessories = form.getValues("accessories");
+                                  const totalCustomerPrice = 
+                                    services.reduce((acc, s) => acc + (s.customerPrice || 0), 0) +
+                                    accessories.reduce((acc, a) => acc + (a.customerPrice || 0), 0);
+                                  form.setValue("customerPrice", totalCustomerPrice);
                                 }}
                               />
                             </TableCell>
@@ -781,14 +800,14 @@ export default function InquiryPage() {
                               <div className="text-[10px] text-muted-foreground">{s.vehicleType}</div>
                             </TableCell>
                             <TableCell className="text-right text-sm">₹{s.price.toLocaleString()}</TableCell>
-                            <TableCell className="text-right text-sm font-bold">₹{s.price.toLocaleString()}</TableCell>
+                            <TableCell className="text-right text-sm font-bold">₹{(s.customerPrice ?? s.price).toLocaleString()}</TableCell>
                           </TableRow>
                         ))}
                         {viewingInquiry.accessories.map((a, idx) => (
                           <TableRow key={`a-${idx}`}>
                             <TableCell className="text-sm">{a.accessoryName}</TableCell>
                             <TableCell className="text-right text-sm">₹{a.price.toLocaleString()}</TableCell>
-                            <TableCell className="text-right text-sm font-bold">₹{a.price.toLocaleString()}</TableCell>
+                            <TableCell className="text-right text-sm font-bold">₹{(a.customerPrice ?? a.price).toLocaleString()}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

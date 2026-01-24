@@ -111,13 +111,15 @@ const inquiryMongoSchema = new mongoose.Schema({
     serviceName: String,
     vehicleType: String,
     warrantyName: String,
-    price: Number
+    price: Number,
+    customerPrice: Number
   }],
   accessories: [{
     accessoryId: String,
     accessoryName: String,
     category: String,
-    price: Number
+    price: Number,
+    customerPrice: Number
   }],
   notes: { type: String },
   ourPrice: { type: Number, default: 0 },

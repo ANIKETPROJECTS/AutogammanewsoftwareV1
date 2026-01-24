@@ -164,6 +164,7 @@ export const inquiryServiceSchema = z.object({
   vehicleType: z.string(),
   warrantyName: z.string().optional(),
   price: z.number(),
+  customerPrice: z.number().optional(),
 });
 
 export const inquiryAccessorySchema = z.object({
@@ -171,6 +172,7 @@ export const inquiryAccessorySchema = z.object({
   accessoryName: z.string(),
   category: z.string(),
   price: z.number(),
+  customerPrice: z.number().optional(),
 });
 
 export const inquirySchema = z.object({
