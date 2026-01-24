@@ -39,7 +39,7 @@ export const api = {
       method: "GET" as const,
       path: "/api/user",
       responses: {
-        200: z.object({ id: z.string(), email: z.string() }),
+        200: z.object({ id: z.string(), email: z.string(), name: z.string().optional() }),
         401: z.void(),
       },
     },
