@@ -119,7 +119,6 @@ export default function InquiryPage() {
       notes: "",
       ourPrice: 0,
       customerPrice: 0,
-      inquiryId: `INQA${Math.floor(Math.random() * 1000)}`,
     },
   });
 
@@ -256,19 +255,6 @@ export default function InquiryPage() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   {/* Basic Info */}
                   <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">Email address (optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Email address (optional)" {...field} className="h-10" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -290,13 +276,35 @@ export default function InquiryPage() {
                           <FormItem>
                             <FormLabel className="text-xs text-muted-foreground font-bold uppercase">Phone Number *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Phone number" {...field} className="h-10" />
+                              <Input 
+                                placeholder="Phone number" 
+                                {...field} 
+                                className="h-10"
+                                maxLength={10}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                  field.onChange(value);
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">Email address (optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Email address (optional)" {...field} className="h-10" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   {/* Service Selection Row */}
