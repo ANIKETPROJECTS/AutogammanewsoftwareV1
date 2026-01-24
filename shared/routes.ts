@@ -152,6 +152,15 @@ export const api = {
             201: accessoryCategorySchema,
           },
         },
+        update: {
+          method: "PATCH" as const,
+          path: "/api/masters/accessory-categories/:id",
+          input: accessoryCategorySchema.omit({ id: true }).partial(),
+          responses: {
+            200: accessoryCategorySchema,
+            404: z.object({ message: z.string() }),
+          },
+        },
         delete: {
           method: "DELETE" as const,
           path: "/api/masters/accessory-categories/:id",

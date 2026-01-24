@@ -162,6 +162,16 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/masters/accessory-categories/:id", async (req, res) => {
+    try {
+      const category = await storage.updateAccessoryCategory(req.params.id, req.body.name);
+      if (!category) return res.status(404).json({ message: "Category not found" });
+      res.json(category);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
   app.delete("/api/masters/accessory-categories/:id", async (req, res) => {
     const success = await storage.deleteAccessoryCategory(req.params.id);
     if (!success) return res.status(404).json({ message: "Category not found" });

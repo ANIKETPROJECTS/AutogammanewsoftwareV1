@@ -98,6 +98,7 @@ export interface IStorage {
   // Accessory Categories
   getAccessoryCategories(): Promise<AccessoryCategory[]>;
   createAccessoryCategory(name: string): Promise<AccessoryCategory>;
+  updateAccessoryCategory(id: string, name: string): Promise<AccessoryCategory | undefined>;
   deleteAccessoryCategory(id: string): Promise<boolean>;
 
   sessionStore: session.Store;
@@ -312,6 +313,15 @@ export class MongoStorage implements IStorage {
   async createAccessoryCategory(name: string): Promise<AccessoryCategory> {
     const c = new AccessoryCategoryModel({ name });
     await c.save();
+    return {
+      id: c._id.toString(),
+      name: c.name
+    };
+  }
+
+  async updateAccessoryCategory(id: string, name: string): Promise<AccessoryCategory | undefined> {
+    const c = await AccessoryCategoryModel.findByIdAndUpdate(id, { name }, { new: true });
+    if (!c) return undefined;
     return {
       id: c._id.toString(),
       name: c.name
