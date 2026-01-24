@@ -147,6 +147,27 @@ export async function registerRoutes(
     }
   });
 
+  app.get(api.masters.accessories.categories.list.path, async (req, res) => {
+    const categories = await storage.getAccessoryCategories();
+    res.json(categories);
+  });
+
+  app.post(api.masters.accessories.categories.create.path, async (req, res) => {
+    try {
+      const { name } = api.masters.accessories.categories.create.input.parse(req.body);
+      const category = await storage.createAccessoryCategory(name);
+      res.status(201).json(category);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/accessory-categories/:id", async (req, res) => {
+    const success = await storage.deleteAccessoryCategory(req.params.id);
+    if (!success) return res.status(404).json({ message: "Category not found" });
+    res.json({ message: "Category deleted" });
+  });
+
   app.patch("/api/masters/accessories/:id", async (req, res) => {
     try {
       const accessory = await storage.updateAccessory(req.params.id, req.body);

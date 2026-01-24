@@ -4,14 +4,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Wrench, Shield, Package, Car, X, Edit2 } from "lucide-react";
+import { Plus, Trash2, Wrench, Shield, Package, Car, X, Edit2, LayoutGrid } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
-import { ServiceMaster, VehicleType, PPFMaster, AccessoryMaster } from "@shared/schema";
+import { ServiceMaster, VehicleType, PPFMaster, AccessoryMaster, AccessoryCategory } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 import { 
   Select, 
@@ -30,7 +31,9 @@ export default function MastersPage() {
   const [isAddAccessoryOpen, setIsAddAccessoryOpen] = useState(false);
   const [editingAccessory, setEditingAccessory] = useState<AccessoryMaster | null>(null);
   const [isManageVehicleTypesOpen, setIsManageVehicleTypesOpen] = useState(false);
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
   const [newVehicleTypeName, setNewVehicleTypeName] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const { data: services = [] } = useQuery<ServiceMaster[]>({
     queryKey: [api.masters.services.list.path],
@@ -46,6 +49,10 @@ export default function MastersPage() {
 
   const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({
     queryKey: [api.masters.vehicleTypes.list.path],
+  });
+
+  const { data: accessoryCategories = [] } = useQuery<AccessoryCategory[]>({
+    queryKey: [api.masters.accessories.categories.list.path],
   });
 
   const deleteServiceMutation = useMutation({
@@ -78,6 +85,23 @@ export default function MastersPage() {
       queryClient.invalidateQueries({ queryKey: [api.masters.vehicleTypes.list.path] });
       setNewVehicleTypeName("");
       toast({ title: "Success", description: "Vehicle type added successfully" });
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (name: string) => apiRequest("POST", api.masters.accessories.categories.create.path, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.accessories.categories.list.path] });
+      setNewCategoryName("");
+      toast({ title: "Success", description: "Category added successfully" });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/masters/accessory-categories/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.masters.accessories.categories.list.path] });
+      toast({ title: "Success", description: "Category deleted successfully" });
     },
   });
 
@@ -284,6 +308,48 @@ export default function MastersPage() {
 
           <TabsContent value="accessories" className="space-y-6">
             <div className="flex justify-end gap-3">
+              <Dialog open={isManageCategoriesOpen} onOpenChange={setIsManageCategoriesOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4" />
+                    Manage Categories
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Manage Accessory Categories</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Category Name" 
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                      />
+                      <Button onClick={() => createCategoryMutation.mutate(newCategoryName)}>Add</Button>
+                    </div>
+                    <div className="space-y-2">
+                      {accessoryCategories.map((cat) => (
+                        <div key={cat.id} className="flex items-center justify-between p-2 border rounded-md">
+                          <span>{cat.name}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => {
+                              if (confirm("Are you sure? This may affect existing accessories.")) {
+                                deleteCategoryMutation.mutate(cat.id!);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Dialog open={isAddAccessoryOpen} onOpenChange={setIsAddAccessoryOpen}>
                 <DialogTrigger asChild>
                   <Button className="flex items-center gap-2">
@@ -295,7 +361,11 @@ export default function MastersPage() {
                   <DialogHeader>
                     <DialogTitle>Add New Accessory</DialogTitle>
                   </DialogHeader>
-                  <AddAccessoryForm onClose={() => setIsAddAccessoryOpen(false)} />
+                  <AddAccessoryForm 
+                    onClose={() => setIsAddAccessoryOpen(false)} 
+                    categories={accessoryCategories}
+                    onAddCategory={(name) => createCategoryMutation.mutate(name)}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -346,6 +416,8 @@ export default function MastersPage() {
                   <AddAccessoryForm 
                     onClose={() => setEditingAccessory(null)} 
                     initialData={editingAccessory} 
+                    categories={accessoryCategories}
+                    onAddCategory={(name) => createCategoryMutation.mutate(name)}
                   />
                 )}
               </DialogContent>
@@ -597,8 +669,17 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
   );
 }
 
-
-function AddAccessoryForm({ onClose, initialData }: { onClose: () => void, initialData?: AccessoryMaster }) {
+function AddAccessoryForm({ 
+  onClose, 
+  initialData, 
+  categories, 
+  onAddCategory 
+}: { 
+  onClose: () => void, 
+  initialData?: AccessoryMaster,
+  categories: AccessoryCategory[],
+  onAddCategory: (name: string) => void
+}) {
   const { toast } = useToast();
   const [category, setCategory] = useState(initialData?.category || "");
   const [name, setName] = useState(initialData?.name || "");
@@ -619,39 +700,31 @@ function AddAccessoryForm({ onClose, initialData }: { onClose: () => void, initi
     },
   });
 
-  const categories = [
-    "ANDROID PLAYER",
-    "Applier Accessories",
-    "Curtains",
-    "Damping Sheet",
-    "Dash Cam",
-    "Door Visor",
-    "Duster",
-    "Fog Light",
-    "Fog Lamp Accessories",
-    "Matting",
-    "Reverse Camera"
-  ];
-
   return (
     <div className="space-y-4 py-4">
       <div className="space-y-2">
         <Label>Category / Type</Label>
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(c => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          options={categories.map(c => ({ label: c.name, value: c.name }))}
+          value={category}
+          onValueChange={setCategory}
+          placeholder="Select category"
+          searchPlaceholder="Search select category..."
+          addNewLabel="Add New Category"
+          onAddNew={() => {
+            const name = prompt("Enter new category name:");
+            if (name) onAddCategory(name);
+          }}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Accessory Name</Label>
-        <Input placeholder="Enter name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input 
+          placeholder="Enter name" 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -659,6 +732,7 @@ function AddAccessoryForm({ onClose, initialData }: { onClose: () => void, initi
           <Label>Quantity</Label>
           <Input 
             type="number" 
+            placeholder="0" 
             value={quantity} 
             onChange={(e) => setQuantity(e.target.value)} 
           />
@@ -667,19 +741,20 @@ function AddAccessoryForm({ onClose, initialData }: { onClose: () => void, initi
           <Label>Price (₹)</Label>
           <Input 
             type="number" 
+            placeholder="0" 
             value={price} 
             onChange={(e) => setPrice(e.target.value)} 
           />
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button onClick={() => accessoryMutation.mutate({ 
           category, 
           name, 
-          quantity: parseInt(quantity), 
-          price: parseInt(price) 
+          quantity: parseInt(quantity) || 0, 
+          price: parseInt(price) || 0 
         })}>
           {initialData ? "Update Accessory" : "Save Accessory"}
         </Button>

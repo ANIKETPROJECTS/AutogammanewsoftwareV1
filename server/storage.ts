@@ -9,6 +9,7 @@ import {
   InsertPPFMaster,
   AccessoryMaster,
   InsertAccessoryMaster,
+  AccessoryCategory,
   VehicleType 
 } from "@shared/schema";
 import session from "express-session";
@@ -54,6 +55,12 @@ const vehicleTypeSchema = new mongoose.Schema({
 
 export const VehicleTypeModel = mongoose.model("VehicleType", vehicleTypeSchema);
 
+const accessoryCategorySchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true }
+});
+
+export const AccessoryCategoryModel = mongoose.model("AccessoryCategory", accessoryCategorySchema);
+
 const accessoryMasterSchema = new mongoose.Schema({
   category: { type: String, required: true },
   name: { type: String, required: true },
@@ -87,6 +94,11 @@ export interface IStorage {
 
   getVehicleTypes(): Promise<VehicleType[]>;
   createVehicleType(name: string): Promise<VehicleType>;
+
+  // Accessory Categories
+  getAccessoryCategories(): Promise<AccessoryCategory[]>;
+  createAccessoryCategory(name: string): Promise<AccessoryCategory>;
+  deleteAccessoryCategory(id: string): Promise<boolean>;
 
   sessionStore: session.Store;
 }
@@ -287,6 +299,28 @@ export class MongoStorage implements IStorage {
       id: t._id.toString(),
       name: t.name
     };
+  }
+
+  async getAccessoryCategories(): Promise<AccessoryCategory[]> {
+    const categories = await AccessoryCategoryModel.find();
+    return categories.map(c => ({
+      id: c._id.toString(),
+      name: c.name
+    }));
+  }
+
+  async createAccessoryCategory(name: string): Promise<AccessoryCategory> {
+    const c = new AccessoryCategoryModel({ name });
+    await c.save();
+    return {
+      id: c._id.toString(),
+      name: c.name
+    };
+  }
+
+  async deleteAccessoryCategory(id: string): Promise<boolean> {
+    const result = await AccessoryCategoryModel.findByIdAndDelete(id);
+    return !!result;
   }
 }
 

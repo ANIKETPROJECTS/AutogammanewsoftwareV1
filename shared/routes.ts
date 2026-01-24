@@ -9,6 +9,7 @@ import {
   insertPPFMasterSchema,
   accessoryMasterSchema,
   insertAccessoryMasterSchema,
+  accessoryCategorySchema,
   vehicleTypeSchema 
 } from "./schema";
 
@@ -135,6 +136,31 @@ export const api = {
       },
     },
     accessories: {
+      categories: {
+        list: {
+          method: "GET" as const,
+          path: "/api/masters/accessory-categories",
+          responses: {
+            200: z.array(accessoryCategorySchema),
+          },
+        },
+        create: {
+          method: "POST" as const,
+          path: "/api/masters/accessory-categories",
+          input: accessoryCategorySchema.omit({ id: true }),
+          responses: {
+            201: accessoryCategorySchema,
+          },
+        },
+        delete: {
+          method: "DELETE" as const,
+          path: "/api/masters/accessory-categories/:id",
+          responses: {
+            200: z.void(),
+            404: z.object({ message: z.string() }),
+          },
+        },
+      },
       list: {
         method: "GET" as const,
         path: "/api/masters/accessories",
