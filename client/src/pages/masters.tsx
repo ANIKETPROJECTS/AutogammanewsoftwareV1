@@ -303,8 +303,9 @@ export default function MastersPage() {
                           <div className="space-y-1">
                             {ppf.rolls.map((roll, i) => (
                               <div key={i} className="flex justify-between items-center text-[10px] bg-muted/50 p-1 px-2 rounded">
+                                <span className="font-bold">{roll.name || `Roll #${i+1}`}</span>
                                 <span className="font-mono">{roll.rollNumber}</span>
-                                <span>{roll.left} / {roll.stock} sqft</span>
+                                <span>{roll.stock} sqft</span>
                               </div>
                             ))}
                           </div>
@@ -539,7 +540,7 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
   });
 
   const addRoll = () => {
-    setRolls([...rolls, { rollNumber: "", stock: 0, left: 0 }]);
+    setRolls([...rolls, { name: "", rollNumber: "", stock: 0 }]);
   };
 
   const updateRoll = (index: number, field: string, value: any) => {
@@ -679,13 +680,21 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
         {rolls.map((roll, index) => (
           <Card key={index} className="border-dashed">
             <CardHeader className="py-2 bg-muted/30 flex flex-row items-center justify-between space-y-0">
-              <span className="text-xs font-bold uppercase">Roll #{index + 1}</span>
+              <span className="text-xs font-bold uppercase">{roll.name || `Roll #${index + 1}`}</span>
               <Button variant="ghost" size="sm" onClick={() => removeRoll(index)}>
                 <X className="h-4 w-4 text-destructive" />
               </Button>
             </CardHeader>
             <CardContent className="pt-3 pb-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Roll Name</Label>
+                  <Input 
+                    placeholder="e.g. Front Roll" 
+                    value={roll.name} 
+                    onChange={(e) => updateRoll(index, "name", e.target.value)} 
+                  />
+                </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-muted-foreground">Roll Number</Label>
                   <Input 
@@ -700,20 +709,7 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
                     type="number" 
                     placeholder="0" 
                     value={roll.stock} 
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      updateRoll(index, "stock", val);
-                      updateRoll(index, "left", val); // Default left to stock
-                    }} 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] uppercase text-muted-foreground">Left (sqft)</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="0" 
-                    value={roll.left} 
-                    onChange={(e) => updateRoll(index, "left", Number(e.target.value))} 
+                    onChange={(e) => updateRoll(index, "stock", Number(e.target.value))} 
                   />
                 </div>
               </div>

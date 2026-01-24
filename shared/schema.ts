@@ -79,9 +79,9 @@ export const ppfVehiclePricingSchema = z.object({
 
 export const ppfRollSchema = z.object({
   id: z.string().optional(),
+  name: z.string(),
   rollNumber: z.string(),
   stock: z.coerce.number(), // sqft
-  left: z.coerce.number(),  // sqft
 });
 
 export const ppfMasterSchema = z.object({

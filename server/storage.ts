@@ -46,9 +46,9 @@ const ppfMasterSchema = new mongoose.Schema({
     }]
   }],
   rolls: [{
+    name: String,
     rollNumber: String,
-    stock: Number,
-    left: Number
+    stock: Number
   }]
 });
 
@@ -221,7 +221,8 @@ export class MongoStorage implements IStorage {
     return ppfs.map(s => ({
       id: s._id.toString(),
       name: s.name,
-      pricingByVehicleType: s.pricingByVehicleType as any
+      pricingByVehicleType: s.pricingByVehicleType as any,
+      rolls: s.rolls as any
     }));
   }
 
@@ -231,7 +232,8 @@ export class MongoStorage implements IStorage {
     return {
       id: s._id.toString(),
       name: s.name,
-      pricingByVehicleType: s.pricingByVehicleType as any
+      pricingByVehicleType: s.pricingByVehicleType as any,
+      rolls: s.rolls as any
     };
   }
 
@@ -241,7 +243,8 @@ export class MongoStorage implements IStorage {
     return {
       id: s._id.toString(),
       name: s.name,
-      pricingByVehicleType: s.pricingByVehicleType as any
+      pricingByVehicleType: s.pricingByVehicleType as any,
+      rolls: s.rolls as any
     };
   }
 
