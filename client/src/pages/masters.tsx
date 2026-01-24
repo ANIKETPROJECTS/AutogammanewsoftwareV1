@@ -686,6 +686,10 @@ function AddAccessoryForm({
   const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || "0");
   const [price, setPrice] = useState(initialData?.price?.toString() || "0");
 
+  const { data: accessories = [] } = useQuery<AccessoryMaster[]>({
+    queryKey: [api.masters.accessories.list.path],
+  });
+
   const accessoryMutation = useMutation({
     mutationFn: (data: any) => {
       if (initialData?.id) {
@@ -699,6 +703,13 @@ function AddAccessoryForm({
       onClose();
     },
   });
+
+  // Get unique accessory names for the current category
+  const existingNames = Array.from(new Set(
+    accessories
+      .filter(a => a.category === category)
+      .map(a => a.name)
+  )).map(n => ({ label: n, value: n }));
 
   return (
     <div className="space-y-4 py-4">
@@ -720,10 +731,17 @@ function AddAccessoryForm({
 
       <div className="space-y-2">
         <Label>Accessory Name</Label>
-        <Input 
-          placeholder="Enter name" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
+        <SearchableSelect
+          options={existingNames}
+          value={name}
+          onValueChange={setName}
+          placeholder="Select or enter name"
+          searchPlaceholder="Search accessory name..."
+          addNewLabel="Add New Accessory Name"
+          onAddNew={() => {
+            const newName = prompt("Enter new accessory name:");
+            if (newName) setName(newName);
+          }}
         />
       </div>
 
