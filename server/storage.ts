@@ -534,7 +534,12 @@ export class MongoStorage implements IStorage {
   }
 
   async createInquiry(inquiry: InsertInquiry): Promise<Inquiry> {
-    const i = new InquiryModel(inquiry);
+    const nextInquiryId = `INQ-${Date.now()}`;
+    const i = new InquiryModel({
+      ...inquiry,
+      inquiryId: nextInquiryId,
+      date: new Date().toISOString()
+    });
     await i.save();
     return {
       id: i._id.toString(),

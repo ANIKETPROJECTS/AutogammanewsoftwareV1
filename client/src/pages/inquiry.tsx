@@ -220,11 +220,25 @@ export default function InquiryPage() {
 
   const onSubmit = (data: InsertInquiry) => {
     console.log("Submitting inquiry data:", data);
-    createMutation.mutate({
+    
+    // Ensure all numeric fields are correctly typed
+    const payload = {
       ...data,
-      ourPrice: Number(data.ourPrice),
-      customerPrice: Number(data.customerPrice)
-    });
+      ourPrice: Number(data.ourPrice || 0),
+      customerPrice: Number(data.customerPrice || 0),
+      // Ensure prices within services and accessories arrays are also numbers
+      services: data.services.map(s => ({
+        ...s,
+        price: Number(s.price || 0)
+      })),
+      accessories: data.accessories.map(a => ({
+        ...a,
+        price: Number(a.price || 0)
+      }))
+    };
+
+    console.log("Cleaned payload:", payload);
+    createMutation.mutate(payload);
   };
 
   const handleSaveClick = () => {
