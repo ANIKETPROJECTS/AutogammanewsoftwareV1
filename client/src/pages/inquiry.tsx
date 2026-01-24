@@ -612,55 +612,111 @@ export default function InquiryPage() {
         </Dialog>
 
         {/* Existing List UI */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {filteredInquiries.map((inquiry) => {
             const diff = inquiry.customerPrice - inquiry.ourPrice;
             const diffPercent = inquiry.ourPrice > 0 ? (diff / inquiry.ourPrice) * 100 : 0;
             return (
               <Card key={inquiry.id} className="hover-elevate transition-all duration-200 border-slate-200">
-                <CardHeader className="p-4 bg-slate-50/50 border-b">
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900">{inquiry.customerName}</h3>
-                      <p className="text-xs text-muted-foreground">{inquiry.inquiryId}</p>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] font-bold uppercase py-0 px-2 h-5 bg-white">
-                      {format(new Date(inquiry.date), "MMM dd")}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Phone</p>
-                      <p className="text-sm font-medium flex items-center gap-1.5">
-                        <Phone className="h-3 w-3 text-blue-500" /> {inquiry.phone}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Services</p>
-                      <p className="text-sm font-medium truncate">
-                        {inquiry.services.length + inquiry.accessories.length} items
-                      </p>
-                    </div>
-                  </div>
+                <CardContent className="p-6">
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Left Column: Customer Details */}
+                    <div className="flex-1 space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Customer Name</p>
+                        <h3 className="text-lg font-bold text-slate-900">{inquiry.customerName}</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Phone Number</p>
+                          <p className="text-sm font-medium flex items-center gap-2 text-blue-600">
+                            <Phone className="h-4 w-4" /> {inquiry.phone}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Email Address</p>
+                          <p className="text-sm font-medium flex items-center gap-2 text-blue-600">
+                            <Mail className="h-4 w-4" /> {inquiry.email || "N/A"}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Final Price</p>
-                      <p className="text-lg font-bold">₹{inquiry.customerPrice.toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Profit</p>
-                      <p className={`text-sm font-bold ${diff >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        ₹{diff.toLocaleString()} ({diffPercent.toFixed(1)}%)
-                      </p>
-                    </div>
-                  </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Services Requested</p>
+                        <div className="bg-slate-50 p-2 rounded-md border border-slate-100 min-h-[40px] flex flex-wrap gap-2">
+                          {inquiry.services.map((s, idx) => (
+                            <Badge key={idx} variant="secondary" className="bg-white text-slate-700 border-slate-200">
+                              {s.serviceName} ({s.vehicleType})
+                            </Badge>
+                          ))}
+                          {inquiry.accessories.map((a, idx) => (
+                            <Badge key={idx} variant="secondary" className="bg-white text-slate-700 border-slate-200">
+                              {a.accessoryName}
+                            </Badge>
+                          ))}
+                          {inquiry.services.length === 0 && inquiry.accessories.length === 0 && (
+                            <span className="text-sm text-muted-foreground italic">No items requested</span>
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1 h-8 text-[11px] font-bold uppercase bg-blue-50 text-blue-600 hover:bg-blue-100 border-none"><Eye className="h-3 w-3 mr-1" /> View</Button>
-                    <Button variant="outline" size="sm" className="flex-1 h-8 text-[11px] font-bold uppercase bg-red-50 text-red-600 hover:bg-red-100 border-none" onClick={() => deleteMutation.mutate(inquiry.id!)}><Trash2 className="h-3 w-3 mr-1" /> Delete</Button>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Special Notes</p>
+                        <div className="bg-orange-50/50 p-2 rounded-md border border-orange-100 text-sm italic text-slate-600 min-h-[40px]">
+                          "{inquiry.notes || "None"}"
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Pricing and Actions */}
+                    <div className="lg:w-1/3 space-y-6 flex flex-col">
+                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex-1 grid grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Our Price</p>
+                          <p className="text-base font-bold">₹{inquiry.ourPrice.toLocaleString()}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Customer Price</p>
+                          <p className="text-base font-bold">₹{inquiry.customerPrice.toLocaleString()}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Difference</p>
+                          <p className={`text-sm font-bold ${diff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                            {diff >= 0 ? "+" : ""}₹{diff.toLocaleString()}
+                          </p>
+                          <p className={`text-[10px] ${diff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                            {diff >= 0 ? "+" : ""}{diffPercent.toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-[10px] font-medium text-slate-400">
+                          <span>Inquiry ID: {inquiry.inquiryId}</span>
+                          <span>Date: {format(new Date(inquiry.date), "MMMM dd, yyyy")}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none h-9 text-xs font-bold uppercase">
+                            View
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white border-none h-9 text-xs font-bold uppercase">
+                            Download
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white border-none h-9 text-xs font-bold uppercase">
+                            Send
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white border-none h-9 text-xs font-bold uppercase"
+                            onClick={() => deleteMutation.mutate(inquiry.id!)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
