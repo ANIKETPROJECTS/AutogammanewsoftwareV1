@@ -219,7 +219,19 @@ export default function InquiryPage() {
   }, [inquiries, searchTerm, serviceFilter]);
 
   const onSubmit = (data: InsertInquiry) => {
-    createMutation.mutate(data);
+    console.log("Submitting inquiry data:", data);
+    createMutation.mutate({
+      ...data,
+      ourPrice: Number(data.ourPrice),
+      customerPrice: Number(data.customerPrice)
+    });
+  };
+
+  const handleSaveClick = () => {
+    console.log("Save Inquiry button clicked");
+    const values = form.getValues();
+    console.log("Form values:", values);
+    form.handleSubmit(onSubmit)();
   };
 
   const allServiceNames = useMemo(() => {
