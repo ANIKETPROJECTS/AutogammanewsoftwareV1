@@ -329,8 +329,8 @@ export default function AppointmentsPage() {
                                   <SelectTrigger className="border-none shadow-none focus:ring-0 w-[45px] p-0 h-auto">
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    {["00", "15", "30", "45"].map((m) => (
+                                  <SelectContent className="max-h-[200px] overflow-y-auto">
+                                    {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0")).map((m) => (
                                       <SelectItem key={m} value={m}>{m}</SelectItem>
                                     ))}
                                   </SelectContent>
