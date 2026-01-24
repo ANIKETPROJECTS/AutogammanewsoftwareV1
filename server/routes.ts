@@ -286,6 +286,27 @@ export async function registerRoutes(
     res.json({ message: "Appointment deleted" });
   });
 
+  // Inquiry Routes
+  app.get("/api/inquiries", async (req, res) => {
+    const inquiries = await storage.getInquiries();
+    res.json(inquiries);
+  });
+
+  app.post("/api/inquiries", async (req, res) => {
+    try {
+      const inquiry = await storage.createInquiry(req.body);
+      res.status(201).json(inquiry);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/inquiries/:id", async (req, res) => {
+    const success = await storage.deleteInquiry(req.params.id);
+    if (!success) return res.status(404).json({ message: "Inquiry not found" });
+    res.json({ message: "Inquiry deleted" });
+  });
+
   // Seed default user if not exists
   if (mongoose.connection.readyState === 1) {
     const defaultEmail = "Autogarage@system.com";
