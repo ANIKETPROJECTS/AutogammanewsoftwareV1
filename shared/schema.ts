@@ -156,3 +156,37 @@ export const appointmentSchema = z.object({
 export type Appointment = z.infer<typeof appointmentSchema>;
 export const insertAppointmentSchema = appointmentSchema.omit({ id: true, status: true, cancelReason: true });
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+
+// Inquiry Schemas
+export const inquiryServiceSchema = z.object({
+  serviceId: z.string(),
+  serviceName: z.string(),
+  vehicleType: z.string(),
+  warrantyName: z.string().optional(),
+  price: z.number(),
+});
+
+export const inquiryAccessorySchema = z.object({
+  accessoryId: z.string(),
+  accessoryName: z.string(),
+  category: z.string(),
+  price: z.number(),
+});
+
+export const inquirySchema = z.object({
+  id: z.string().optional(),
+  inquiryId: z.string(),
+  customerName: z.string().min(1),
+  phone: z.string().min(1),
+  email: z.string().email().optional(),
+  services: z.array(inquiryServiceSchema).default([]),
+  accessories: z.array(inquiryAccessorySchema).default([]),
+  notes: z.string().optional(),
+  ourPrice: z.number(),
+  customerPrice: z.number(),
+  date: z.string().default(() => new Date().toISOString()),
+});
+
+export type Inquiry = z.infer<typeof inquirySchema>;
+export const insertInquirySchema = inquirySchema.omit({ id: true, inquiryId: true, date: true });
+export type InsertInquiry = z.infer<typeof insertInquirySchema>;
