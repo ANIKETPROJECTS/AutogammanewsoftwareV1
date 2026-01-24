@@ -97,8 +97,8 @@ export default function AccessoryCategoryDetail() {
     <Layout>
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/masters">
-            <Button variant="ghost" size="icon">
+          <Link href="/masters?tab=accessories">
+            <Button variant="ghost" size="icon" data-testid="button-back">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
@@ -121,8 +121,9 @@ export default function AccessoryCategoryDetail() {
                   placeholder="New Category" 
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
+                  data-testid="input-new-category"
                 />
-                <Button size="icon" onClick={() => createCategoryMutation.mutate(newCategoryName)}>
+                <Button size="icon" onClick={() => createCategoryMutation.mutate(newCategoryName)} data-testid="button-add-category">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -134,6 +135,7 @@ export default function AccessoryCategoryDetail() {
                       selectedCategory?.id === cat.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`}
                     onClick={() => setSelectedCategory(cat)}
+                    data-testid={`category-item-${cat.id}`}
                   >
                     {editingCategoryId === cat.id ? (
                       <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
@@ -142,12 +144,14 @@ export default function AccessoryCategoryDetail() {
                           className="h-7 text-xs text-foreground"
                           value={editCategoryValue}
                           onChange={(e) => setEditCategoryValue(e.target.value)}
+                          data-testid="input-edit-category"
                         />
                         <Button 
                           size="icon" 
                           variant="ghost" 
                           className="h-7 w-7"
                           onClick={() => updateCategoryMutation.mutate({ id: cat.id!, name: editCategoryValue })}
+                          data-testid="button-confirm-edit-category"
                         >
                           <Check className="h-3 w-3" />
                         </Button>
@@ -156,6 +160,7 @@ export default function AccessoryCategoryDetail() {
                           variant="ghost" 
                           className="h-7 w-7"
                           onClick={() => setEditingCategoryId(null)}
+                          data-testid="button-cancel-edit-category"
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -173,6 +178,7 @@ export default function AccessoryCategoryDetail() {
                               setEditingCategoryId(cat.id!);
                               setEditCategoryValue(cat.name);
                             }}
+                            data-testid={`button-edit-category-${cat.id}`}
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -184,6 +190,7 @@ export default function AccessoryCategoryDetail() {
                               e.stopPropagation();
                               if (confirm("Delete category?")) deleteCategoryMutation.mutate(cat.id!);
                             }}
+                            data-testid={`button-delete-category-${cat.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -211,6 +218,7 @@ export default function AccessoryCategoryDetail() {
                         placeholder="Name" 
                         value={newAccessoryName}
                         onChange={(e) => setNewAccessoryName(e.target.value)}
+                        data-testid="input-new-accessory-name"
                       />
                     </div>
                     <Input 
@@ -218,20 +226,25 @@ export default function AccessoryCategoryDetail() {
                       type="number"
                       value={newAccessoryQuantity}
                       onChange={(e) => setNewAccessoryQuantity(e.target.value)}
+                      data-testid="input-new-accessory-qty"
                     />
                     <Input 
                       placeholder="Price" 
                       type="number"
                       value={newAccessoryPrice}
                       onChange={(e) => setNewAccessoryPrice(e.target.value)}
+                      data-testid="input-new-accessory-price"
                     />
                     <div className="sm:col-span-4 flex justify-end">
-                      <Button onClick={() => createAccessoryMutation.mutate({
-                        category: selectedCategory.name,
-                        name: newAccessoryName,
-                        quantity: Number(newAccessoryQuantity) || 0,
-                        price: Number(newAccessoryPrice) || 0
-                      })}>
+                      <Button 
+                        onClick={() => createAccessoryMutation.mutate({
+                          category: selectedCategory.name,
+                          name: newAccessoryName,
+                          quantity: Number(newAccessoryQuantity) || 0,
+                          price: Number(newAccessoryPrice) || 0
+                        })}
+                        data-testid="button-add-accessory"
+                      >
                         Add Item
                       </Button>
                     </div>
@@ -240,7 +253,7 @@ export default function AccessoryCategoryDetail() {
                     {accessories
                       .filter(a => a.category === selectedCategory.name)
                       .map((acc) => (
-                        <div key={acc.id} className="p-3 border rounded-md">
+                        <div key={acc.id} className="p-3 border rounded-md" data-testid={`accessory-item-${acc.id}`}>
                           {editingAccessoryId === acc.id ? (
                             <div className="space-y-2">
                               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
@@ -250,6 +263,7 @@ export default function AccessoryCategoryDetail() {
                                     placeholder="Name"
                                     value={editAccessoryName}
                                     onChange={(e) => setEditAccessoryName(e.target.value)}
+                                    data-testid="input-edit-accessory-name"
                                   />
                                 </div>
                                 <Input 
@@ -258,6 +272,7 @@ export default function AccessoryCategoryDetail() {
                                   placeholder="Qty"
                                   value={editAccessoryQuantity}
                                   onChange={(e) => setEditAccessoryQuantity(e.target.value)}
+                                  data-testid="input-edit-accessory-qty"
                                 />
                                 <Input 
                                   size="sm" 
@@ -265,6 +280,7 @@ export default function AccessoryCategoryDetail() {
                                   placeholder="Price"
                                   value={editAccessoryPrice}
                                   onChange={(e) => setEditAccessoryPrice(e.target.value)}
+                                  data-testid="input-edit-accessory-price"
                                 />
                               </div>
                               <div className="flex justify-end gap-1">
@@ -280,6 +296,7 @@ export default function AccessoryCategoryDetail() {
                                       price: Number(editAccessoryPrice) || 0
                                     } 
                                   })}
+                                  data-testid="button-confirm-edit-accessory"
                                 >
                                   <Check className="h-4 w-4" />
                                 </Button>
@@ -288,6 +305,7 @@ export default function AccessoryCategoryDetail() {
                                   variant="ghost" 
                                   className="h-8 w-8"
                                   onClick={() => setEditingAccessoryId(null)}
+                                  data-testid="button-cancel-edit-accessory"
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>
@@ -296,9 +314,9 @@ export default function AccessoryCategoryDetail() {
                           ) : (
                             <div className="flex items-center justify-between">
                               <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                <span className="font-medium truncate">{acc.name}</span>
-                                <span className="text-sm text-muted-foreground">Qty: {acc.quantity}</span>
-                                <span className="text-sm text-muted-foreground text-primary font-bold">₹{acc.price}</span>
+                                <span className="font-medium truncate" data-testid={`text-accessory-name-${acc.id}`}>{acc.name}</span>
+                                <span className="text-sm text-muted-foreground" data-testid={`text-accessory-qty-${acc.id}`}>Qty: {acc.quantity}</span>
+                                <span className="text-sm text-muted-foreground text-primary font-bold" data-testid={`text-accessory-price-${acc.id}`}>₹{acc.price}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Button 
@@ -311,6 +329,7 @@ export default function AccessoryCategoryDetail() {
                                     setEditAccessoryQuantity(acc.quantity.toString());
                                     setEditAccessoryPrice(acc.price.toString());
                                   }}
+                                  data-testid={`button-edit-accessory-${acc.id}`}
                                 >
                                   <Edit2 className="h-4 w-4" />
                                 </Button>
@@ -321,6 +340,7 @@ export default function AccessoryCategoryDetail() {
                                   onClick={() => {
                                     if (confirm("Delete accessory?")) deleteAccessoryMutation.mutate(acc.id!);
                                   }}
+                                  data-testid={`button-delete-accessory-${acc.id}`}
                                 >
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>

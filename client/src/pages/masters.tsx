@@ -22,9 +22,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function MastersPage() {
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(location.split("?")[1]);
+  const defaultTab = searchParams.get("tab") || "service";
   const { toast } = useToast();
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceMaster | null>(null);
@@ -121,7 +124,7 @@ export default function MastersPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="service" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="service" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />
