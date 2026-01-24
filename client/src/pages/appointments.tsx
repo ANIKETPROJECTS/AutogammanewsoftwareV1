@@ -287,15 +287,72 @@ export default function AppointmentsPage() {
                     <FormField
                       control={form.control}
                       name="time"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Time *</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const [hours, minutes] = field.value.split(":");
+                        const h = parseInt(hours);
+                        const period = h >= 12 ? "PM" : "AM";
+                        const displayHour = h % 12 || 12;
+                        const hourStr = displayHour.toString().padStart(2, "0");
+
+                        const updateTime = (newHour: string, newMinute: string, newPeriod: string) => {
+                          let hh = parseInt(newHour);
+                          if (newPeriod === "PM" && hh < 12) hh += 12;
+                          if (newPeriod === "AM" && hh === 12) hh = 0;
+                          const formattedTime = `${hh.toString().padStart(2, "0")}:${newMinute}`;
+                          field.onChange(formattedTime);
+                        };
+
+                        return (
+                          <FormItem>
+                            <FormLabel>Time *</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center gap-2 border rounded-md px-3 py-1 bg-background h-10">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <Select 
+                                  value={hourStr} 
+                                  onValueChange={(v) => updateTime(v, minutes, period)}
+                                >
+                                  <SelectTrigger className="border-none shadow-none focus:ring-0 w-[45px] p-0 h-auto">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0")).map((h) => (
+                                      <SelectItem key={h} value={h}>{h}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <span className="text-muted-foreground">:</span>
+                                <Select 
+                                  value={minutes} 
+                                  onValueChange={(v) => updateTime(hourStr, v, period)}
+                                >
+                                  <SelectTrigger className="border-none shadow-none focus:ring-0 w-[45px] p-0 h-auto">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {["00", "15", "30", "45"].map((m) => (
+                                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Select 
+                                  value={period} 
+                                  onValueChange={(v) => updateTime(hourStr, minutes, v)}
+                                >
+                                  <SelectTrigger className="border-none shadow-none focus:ring-0 w-[55px] p-0 h-auto font-medium">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="AM">AM</SelectItem>
+                                    <SelectItem value="PM">PM</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
                   <div className="flex gap-4 pt-4">
