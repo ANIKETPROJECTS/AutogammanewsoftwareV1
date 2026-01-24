@@ -28,6 +28,7 @@ export default function MastersPage() {
   const [location] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1]);
   const defaultTab = searchParams.get("tab") || "service";
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const { toast } = useToast();
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceMaster | null>(null);
@@ -124,7 +125,7 @@ export default function MastersPage() {
           </div>
         </div>
 
-        <Tabs defaultValue={defaultTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="service" className="flex items-center gap-2">
               <Wrench className="h-4 w-4" />

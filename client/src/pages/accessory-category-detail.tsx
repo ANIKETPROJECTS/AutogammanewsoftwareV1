@@ -140,7 +140,6 @@ export default function AccessoryCategoryDetail() {
                     {editingCategoryId === cat.id ? (
                       <div className="flex items-center gap-1 flex-1" onClick={(e) => e.stopPropagation()}>
                         <Input 
-                          size="sm" 
                           className="h-7 text-xs text-foreground"
                           value={editCategoryValue}
                           onChange={(e) => setEditCategoryValue(e.target.value)}
@@ -259,7 +258,6 @@ export default function AccessoryCategoryDetail() {
                               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                                 <div className="sm:col-span-2">
                                   <Input 
-                                    size="sm" 
                                     placeholder="Name"
                                     value={editAccessoryName}
                                     onChange={(e) => setEditAccessoryName(e.target.value)}
@@ -267,7 +265,6 @@ export default function AccessoryCategoryDetail() {
                                   />
                                 </div>
                                 <Input 
-                                  size="sm" 
                                   type="number"
                                   placeholder="Qty"
                                   value={editAccessoryQuantity}
@@ -275,7 +272,6 @@ export default function AccessoryCategoryDetail() {
                                   data-testid="input-edit-accessory-qty"
                                 />
                                 <Input 
-                                  size="sm" 
                                   type="number"
                                   placeholder="Price"
                                   value={editAccessoryPrice}
