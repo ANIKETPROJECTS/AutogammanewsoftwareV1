@@ -697,10 +697,17 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
                 <div className="space-y-1">
                   <Label className="text-[10px] uppercase text-muted-foreground">Stock (sqft)</Label>
                   <Input 
-                    type="number" 
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="0" 
                     value={roll.stock} 
-                    onChange={(e) => updateRoll(index, "stock", Number(e.target.value))} 
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^[0-9]+$/.test(value)) {
+                        updateRoll(index, "stock", value);
+                      }
+                    }} 
                   />
                 </div>
               </div>
