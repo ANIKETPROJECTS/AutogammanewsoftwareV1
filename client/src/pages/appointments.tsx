@@ -53,9 +53,10 @@ import { format, parseISO } from "date-fns";
 export default function AppointmentsPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("SCHEDULED");
   const [sortOrder, setSortOrder] = useState<"OLDEST" | "NEWEST">("OLDEST");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
 
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
     queryKey: [api.appointments.list.path],
@@ -69,6 +70,7 @@ export default function AppointmentsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
       setIsFormOpen(false);
+      setEditingAppointment(null);
       toast({ title: "Appointment booked successfully" });
     },
   });
@@ -80,6 +82,8 @@ export default function AppointmentsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.appointments.list.path] });
+      setIsFormOpen(false);
+      setEditingAppointment(null);
       toast({ title: "Appointment updated" });
     },
   });
@@ -123,7 +127,24 @@ export default function AppointmentsPage() {
   });
 
   const onSubmit = (data: InsertAppointment) => {
-    createMutation.mutate(data);
+    if (editingAppointment) {
+      updateMutation.mutate({ id: editingAppointment.id!, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const openReschedule = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    form.reset({
+      customerName: appointment.customerName,
+      phone: appointment.phone,
+      vehicleInfo: appointment.vehicleInfo,
+      serviceType: appointment.serviceType,
+      date: appointment.date,
+      time: appointment.time,
+    });
+    setIsFormOpen(true);
   };
 
   const getStatusBadge = (status: AppointmentStatus, reason?: string) => {
@@ -192,7 +213,20 @@ export default function AppointmentsPage() {
         </div>
 
         <div>
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <Dialog open={isFormOpen} onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) {
+              setEditingAppointment(null);
+              form.reset({
+                customerName: "",
+                phone: "",
+                vehicleInfo: "",
+                serviceType: "",
+                date: format(new Date(), "yyyy-MM-dd"),
+                time: "09:00",
+              });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-red-500 hover:bg-red-600 text-white font-semibold">
                 Book Appointment
@@ -200,7 +234,7 @@ export default function AppointmentsPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
-                <DialogTitle>Book Appointment</DialogTitle>
+                <DialogTitle>{editingAppointment ? "Reschedule Appointment" : "Book Appointment"}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -359,9 +393,9 @@ export default function AppointmentsPage() {
                     <Button 
                       type="submit" 
                       className="flex-1 bg-red-500 hover:bg-red-600 text-white"
-                      disabled={createMutation.isPending}
+                      disabled={createMutation.isPending || updateMutation.isPending}
                     >
-                      Book Appointment
+                      {editingAppointment ? "Update Appointment" : "Book Appointment"}
                     </Button>
                     <Button 
                       type="button" 
@@ -429,10 +463,7 @@ export default function AppointmentsPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem 
                                 className="flex items-center gap-2 cursor-pointer"
-                                onClick={() => {
-                                  // Reschedule - just re-open form with data would be ideal, but for now just Toast
-                                  toast({ title: "Reschedule functionality coming soon" });
-                                }}
+                                onClick={() => openReschedule(a)}
                               >
                                 <Clock className="h-4 w-4" /> Reschedule
                               </DropdownMenuItem>
