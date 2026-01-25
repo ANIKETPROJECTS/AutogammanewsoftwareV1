@@ -39,17 +39,23 @@ const jobCardSchema = z.object({
   services: z.array(z.object({
     serviceId: z.string(),
     name: z.string(),
+    price: z.number(),
   })),
   ppfs: z.array(z.object({
     ppfId: z.string(),
     name: z.string(),
-    rollId: z.string().optional(),
     rollUsed: z.number().optional(),
+    price: z.number(),
   })),
   accessories: z.array(z.object({
     accessoryId: z.string(),
     name: z.string(),
+    price: z.number(),
   })),
+  laborCharge: z.number().default(0),
+  discount: z.number().default(0),
+  gst: z.number().default(0),
+  serviceNotes: z.string().optional(),
 });
 
 type JobCardFormValues = z.infer<typeof jobCardSchema>;
@@ -70,6 +76,10 @@ export default function AddJobPage() {
       services: [],
       ppfs: [],
       accessories: [],
+      laborCharge: 0,
+      discount: 0,
+      gst: 0,
+      serviceNotes: "",
     },
   });
 
@@ -116,10 +126,13 @@ export default function AddJobPage() {
   const handleAddService = () => {
     const s = services.find(item => item.id === selectedService);
     const tech = technicians.find(t => t.id === selectedTechnician);
+    const vehiclePricing = s?.pricingByVehicleType.find(p => p.vehicleType === selectedServiceVehicleType);
+    
     if (s && selectedServiceVehicleType) {
       appendService({ 
         serviceId: s.id!, 
-        name: `${s.name} (${selectedServiceVehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}` 
+        name: `${s.name} (${selectedServiceVehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}`,
+        price: vehiclePricing?.price || 0
       });
       setSelectedService("");
       setSelectedServiceVehicleType("");
@@ -129,11 +142,15 @@ export default function AddJobPage() {
 
   const handleAddPPF = () => {
     const p = ppfMasters.find(item => item.id === selectedPPF);
+    const vehiclePricing = p?.pricingByVehicleType.find(v => v.vehicleType === selectedPPFVehicleType);
+    const option = vehiclePricing?.options.find(o => o.warrantyName === selectedWarranty);
+    
     if (p && selectedPPFVehicleType && selectedWarranty) {
       appendPPF({ 
         ppfId: p.id!, 
         name: `${p.name} (${selectedPPFVehicleType} - ${selectedWarranty})`,
-        rollUsed: rollQty > 0 ? rollQty : undefined
+        rollUsed: rollQty > 0 ? rollQty : undefined,
+        price: option?.price || 0
       });
       setSelectedPPF("");
       setSelectedPPFVehicleType("");
@@ -145,7 +162,7 @@ export default function AddJobPage() {
   const handleAddAccessory = () => {
     const a = accessories.find(item => item.id === selectedAccessory);
     if (a) {
-      appendAccessory({ accessoryId: a.id!, name: a.name });
+      appendAccessory({ accessoryId: a.id!, name: a.name, price: a.price });
       setSelectedAccessory("");
     }
   };
@@ -549,6 +566,138 @@ export default function AddJobPage() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Charges and Notes Section */}
+            <Card className="border-slate-200">
+              <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="laborCharge"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">Labor Charge (₹)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="discount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">Discount (₹)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="gst"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">GST (%)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="serviceNotes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-semibold text-slate-700">Service Notes</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Additional notes for the invoice..." {...field} className="h-11" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Price Summary Section */}
+            <Card className="border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 p-4 border-b">
+                <h3 className="font-bold text-slate-700 uppercase text-sm tracking-wider">Price Summary</h3>
+              </div>
+              <CardContent className="p-0">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50/50 text-slate-500 font-bold uppercase text-[10px] tracking-widest border-b">
+                    <tr>
+                      <th className="px-6 py-3">Description</th>
+                      <th className="px-6 py-3 text-right">Price (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-slate-700">{item.name}</td>
+                        <td className="px-6 py-4 text-right font-semibold">₹{item.price.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {form.watch("laborCharge") > 0 && (
+                      <tr className="bg-slate-50/30">
+                        <td className="px-6 py-4 font-medium text-slate-500 italic">Labor Charges</td>
+                        <td className="px-6 py-4 text-right font-semibold text-slate-500">₹{form.watch("laborCharge").toLocaleString()}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                  <tfoot className="bg-slate-50/80 font-bold text-slate-900 border-t-2 border-slate-200">
+                    <tr>
+                      <td className="px-6 py-4 text-right text-slate-500">Subtotal</td>
+                      <td className="px-6 py-4 text-right text-lg">
+                        ₹{(
+                          [...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].reduce((acc, curr) => acc + curr.price, 0) +
+                          form.watch("laborCharge")
+                        ).toLocaleString()}
+                      </td>
+                    </tr>
+                    {form.watch("discount") > 0 && (
+                      <tr className="text-red-600">
+                        <td className="px-6 py-2 text-right">Discount</td>
+                        <td className="px-6 py-2 text-right">-₹{form.watch("discount").toLocaleString()}</td>
+                      </tr>
+                    )}
+                    {form.watch("gst") > 0 && (
+                      <tr className="text-slate-600">
+                        <td className="px-6 py-2 text-right">GST ({form.watch("gst")}%)</td>
+                        <td className="px-6 py-2 text-right">
+                          ₹{(
+                            Math.round(([...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].reduce((acc, curr) => acc + curr.price, 0) +
+                            form.watch("laborCharge") - form.watch("discount")) * (form.watch("gst") / 100))
+                          ).toLocaleString()}
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="text-xl bg-red-600 text-white">
+                      <td className="px-6 py-4 text-right uppercase tracking-wider">Total Amount</td>
+                      <td className="px-6 py-4 text-right">
+                        ₹{(
+                          (() => {
+                            const subtotal = [...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].reduce((acc, curr) => acc + curr.price, 0) + form.watch("laborCharge");
+                            const afterDiscount = subtotal - form.watch("discount");
+                            const tax = afterDiscount * (form.watch("gst") / 100);
+                            return Math.round(afterDiscount + tax);
+                          })()
+                        ).toLocaleString()}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
               </CardContent>
             </Card>
 
