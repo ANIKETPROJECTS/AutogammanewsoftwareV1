@@ -16,7 +16,9 @@ import {
   Appointment,
   InsertAppointment,
   JobCard,
-  InsertJobCard
+  InsertJobCard,
+  Inquiry,
+  InsertInquiry
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";

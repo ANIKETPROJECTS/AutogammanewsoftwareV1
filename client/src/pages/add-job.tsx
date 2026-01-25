@@ -20,10 +20,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ChevronLeft, User, Car, Settings, Shield, Package, Trash2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceMaster, PPFMaster, AccessoryMaster } from "@shared/schema";
 import { api } from "@shared/routes";
@@ -141,7 +140,7 @@ export default function AddJobPage() {
         serviceId: s.id!, 
         name: `${s.name} (${selectedServiceVehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}`,
         price: vehiclePricing?.price || 0
-      });
+      } as any);
       setSelectedService("");
       setSelectedServiceVehicleType("");
       setSelectedTechnician("");
@@ -159,7 +158,7 @@ export default function AddJobPage() {
         name: `${p.name} (${selectedPPFVehicleType} - ${selectedWarranty})`,
         rollUsed: rollQty > 0 ? rollQty : undefined,
         price: option?.price || 0
-      });
+      } as any);
       setSelectedPPF("");
       setSelectedPPFVehicleType("");
       setSelectedWarranty("");
@@ -170,7 +169,7 @@ export default function AddJobPage() {
   const handleAddAccessory = () => {
     const a = accessories.find(item => item.id === selectedAccessory);
     if (a) {
-      appendAccessory({ accessoryId: a.id!, name: a.name, price: a.price });
+      appendAccessory({ accessoryId: a.id!, name: a.name, price: a.price } as any);
       setSelectedAccessory("");
     }
   };
@@ -493,12 +492,12 @@ export default function AddJobPage() {
                     <div className="bg-slate-50 p-3 text-xs font-bold uppercase text-slate-500 border-b">Selected Services</div>
                     <div className="divide-y">
                       {serviceFields.map((field, index) => (
-                        <div key={field.id} className="flex items-center justify-between p-3">
-                          <span className="text-sm font-medium">{field.name}</span>
-                          <Button variant="ghost" size="icon" onClick={() => removeService(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                          <div key={field.id} className="flex items-center justify-between p-3">
+                            <span className="text-sm font-medium">{(field as any).name}</span>
+                            <Button variant="ghost" size="icon" type="button" onClick={() => removeService(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                       ))}
                     </div>
                   </div>
@@ -587,21 +586,19 @@ export default function AddJobPage() {
                   <div className="border rounded-md overflow-hidden">
                     <div className="bg-slate-50 p-3 text-xs font-bold uppercase text-slate-500 border-b">Selected PPF</div>
                     <div className="divide-y">
-                      {ppfFields.map((field, index) => (
                         <div key={field.id} className="flex items-center justify-between p-3">
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{field.name}</span>
-                            {field.rollUsed && (
+                            <span className="text-sm font-medium">{(field as any).name}</span>
+                            {(field as any).rollUsed && (
                               <span className="text-xs text-slate-500">
-                                Quantity: {field.rollUsed}m
+                                Quantity: {(field as any).rollUsed}m
                               </span>
                             )}
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => removePPF(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
+                          <Button variant="ghost" size="icon" type="button" onClick={() => removePPF(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      ))}
                     </div>
                   </div>
                 )}
@@ -656,8 +653,8 @@ export default function AddJobPage() {
                     <div className="divide-y">
                       {accessoryFields.map((field, index) => (
                         <div key={field.id} className="flex items-center justify-between p-3">
-                          <span className="text-sm font-medium">{field.name}</span>
-                          <Button variant="ghost" size="icon" onClick={() => removeAccessory(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
+                          <span className="text-sm font-medium">{(field as any).name}</span>
+                          <Button variant="ghost" size="icon" type="button" onClick={() => removeAccessory(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -777,8 +774,8 @@ export default function AddJobPage() {
                   <tbody className="divide-y divide-slate-100">
                     {[...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].map((item, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-slate-700">{item.name}</td>
-                        <td className="px-6 py-4 text-right font-semibold">₹{item.price.toLocaleString()}</td>
+                        <td className="px-6 py-4 font-medium text-slate-700">{(item as any).name}</td>
+                        <td className="px-6 py-4 text-right font-semibold">₹{(item as any).price.toLocaleString()}</td>
                       </tr>
                     ))}
                     {form.watch("laborCharge") > 0 && (
@@ -793,7 +790,7 @@ export default function AddJobPage() {
                       <td className="px-6 py-4 text-right text-slate-500">Subtotal</td>
                       <td className="px-6 py-4 text-right text-lg">
                         ₹{(
-                          [...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].reduce((acc, curr) => acc + curr.price, 0) +
+                          ([...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")] as any[]).reduce((acc, curr) => acc + curr.price, 0) +
                           form.watch("laborCharge")
                         ).toLocaleString()}
                       </td>
@@ -809,7 +806,7 @@ export default function AddJobPage() {
                         <td className="px-6 py-2 text-right">GST ({form.watch("gst")}%)</td>
                         <td className="px-6 py-2 text-right">
                           ₹{(
-                            Math.round(([...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].reduce((acc, curr) => acc + curr.price, 0) +
+                            Math.round((([...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")] as any[]).reduce((acc, curr) => acc + curr.price, 0) +
                             form.watch("laborCharge") - form.watch("discount")) * (form.watch("gst") / 100))
                           ).toLocaleString()}
                         </td>
@@ -820,9 +817,9 @@ export default function AddJobPage() {
                       <td className="px-6 py-4 text-right">
                         ₹{(
                           (() => {
-                            const subtotal = [...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")].reduce((acc, curr) => acc + curr.price, 0) + form.watch("laborCharge");
-                            const afterDiscount = subtotal - form.watch("discount");
-                            const tax = afterDiscount * (form.watch("gst") / 100);
+                            const subtotal = ([...form.watch("services"), ...form.watch("ppfs"), ...form.watch("accessories")] as any[]).reduce((acc, curr) => acc + (curr.price || 0), 0) + (form.watch("laborCharge") || 0);
+                            const afterDiscount = subtotal - (form.watch("discount") || 0);
+                            const tax = afterDiscount * ((form.watch("gst") || 0) / 100);
                             return Math.round(afterDiscount + tax);
                           })()
                         ).toLocaleString()}
