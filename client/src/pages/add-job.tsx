@@ -49,6 +49,7 @@ const jobCardSchema = z.object({
   model: z.string().min(1, "Vehicle model is required"),
   year: z.string().min(4, "Year must be 4 digits"),
   licensePlate: z.string().min(1, "License plate is required"),
+  vehicleType: z.string().min(1, "Vehicle type is required"),
   vin: z.string().optional().or(z.literal("")),
   services: z.array(z.object({
     serviceId: z.string(),
@@ -89,6 +90,7 @@ export default function AddJobPage() {
       model: "",
       year: "",
       licensePlate: "",
+      vehicleType: "",
       vin: "",
       services: [],
       ppfs: [],
@@ -143,35 +145,35 @@ export default function AddJobPage() {
   const handleAddService = () => {
     const s = services.find(item => item.id === selectedService);
     const tech = technicians.find(t => t.id === selectedTechnician);
-    const vehiclePricing = s?.pricingByVehicleType.find(p => p.vehicleType === selectedServiceVehicleType);
+    const vehicleType = form.getValues("vehicleType");
+    const vehiclePricing = s?.pricingByVehicleType.find(p => p.vehicleType === vehicleType);
     
-    if (s && selectedServiceVehicleType) {
+    if (s && vehicleType) {
       appendService({ 
         serviceId: s.id!, 
-        name: `${s.name} (${selectedServiceVehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}`,
+        name: `${s.name} (${vehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}`,
         price: vehiclePricing?.price || 0,
         technician: tech?.name
       } as any);
       setSelectedService("");
-      setSelectedServiceVehicleType("");
       setSelectedTechnician("");
     }
   };
 
   const handleAddPPF = () => {
     const p = ppfMasters.find(item => item.id === selectedPPF);
-    const vehiclePricing = p?.pricingByVehicleType.find(v => v.vehicleType === selectedPPFVehicleType);
+    const vehicleType = form.getValues("vehicleType");
+    const vehiclePricing = p?.pricingByVehicleType.find(v => v.vehicleType === vehicleType);
     const option = vehiclePricing?.options.find(o => o.warrantyName === selectedWarranty);
     
-    if (p && selectedPPFVehicleType && selectedWarranty) {
+    if (p && vehicleType && selectedWarranty) {
       appendPPF({ 
         ppfId: p.id!, 
-        name: `${p.name} (${selectedPPFVehicleType} - ${selectedWarranty})`,
+        name: `${p.name} (${vehicleType} - ${selectedWarranty})`,
         rollUsed: rollQty > 0 ? rollQty : undefined,
         price: option?.price || 0
       } as any);
       setSelectedPPF("");
-      setSelectedPPFVehicleType("");
       setSelectedWarranty("");
       setRollQty(0);
     }
@@ -430,19 +432,43 @@ export default function AddJobPage() {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="vin"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-semibold text-slate-700">VIN (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1HGBH41JXMN109186" {...field} className="h-11" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="vehicleType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">Vehicle Type *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="Select Vehicle Type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vehicleTypes.map((v) => (
+                              <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="vin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">VIN (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="1HGBH41JXMN109186" {...field} className="h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -470,19 +496,6 @@ export default function AddJobPage() {
                     </Select>
                   </div>
                   <div className="md:col-span-3 space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
-                    <Select value={selectedServiceVehicleType} onValueChange={setSelectedServiceVehicleType}>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicleTypes.map(v => (
-                          <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="md:col-span-2 space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase">Technician (Optional)</label>
                     <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
                       <SelectTrigger className="h-11">
@@ -544,34 +557,32 @@ export default function AddJobPage() {
                     </Select>
                   </div>
                   <div className="md:col-span-3 space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
-                    <Select value={selectedPPFVehicleType} onValueChange={setSelectedPPFVehicleType}>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicleTypes.map(v => (
-                          <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="md:col-span-3 space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase">Warranty</label>
-                    <Select value={selectedWarranty} onValueChange={setSelectedWarranty} disabled={!selectedPPF || !selectedPPFVehicleType}>
+                    <Select value={selectedWarranty} onValueChange={setSelectedWarranty} disabled={!selectedPPF || !form.watch("vehicleType")}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select Warranty" />
                       </SelectTrigger>
                       <SelectContent>
                         {currentPPF?.pricingByVehicleType
-                          ?.find(v => v.vehicleType === selectedPPFVehicleType)
+                          ?.find(v => v.vehicleType === form.watch("vehicleType"))
                           ?.options.map(o => (
                             <SelectItem key={o.warrantyName} value={o.warrantyName}>{o.warrantyName}</SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Sqft Used</label>
+                    <Input 
+                      type="number" 
+                      value={rollQty || ""} 
+                      onChange={(e) => setRollQty(parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="h-11"
+                      disabled={!selectedPPF}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
                     <Button type="button" onClick={handleAddPPF} className="w-full h-11 bg-red-100 text-red-600 hover:bg-red-200 border-none font-semibold">
                       Add PPF
                     </Button>
