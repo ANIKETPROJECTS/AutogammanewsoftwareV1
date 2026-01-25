@@ -155,7 +155,7 @@ export default function JobDetailsPage() {
                   <CardTitle className="text-base font-bold">Customer Information</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-12">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Customer Name</p>
                   <p className="text-base font-semibold text-slate-800">{job.customerName}</p>
@@ -166,6 +166,12 @@ export default function JobDetailsPage() {
                     {job.phoneNumber}
                   </p>
                 </div>
+                {job.emailAddress && (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email Address</p>
+                    <p className="text-base font-semibold text-slate-800 break-all">{job.emailAddress}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -321,12 +327,6 @@ export default function JobDetailsPage() {
                       <p className="text-base font-semibold text-slate-800">{job.referrerPhone || "N/A"}</p>
                     </div>
                   </>
-                )}
-                {job.emailAddress && (
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email Address</p>
-                    <p className="text-base font-semibold text-slate-800">{job.emailAddress}</p>
-                  </div>
                 )}
               </CardContent>
             </Card>
