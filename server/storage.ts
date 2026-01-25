@@ -571,6 +571,33 @@ export class MongoStorage implements IStorage {
       date: new Date().toISOString()
     });
     await j.save();
+
+    // Deduct PPF roll inventory
+    if (jobCard.ppfs && jobCard.ppfs.length > 0) {
+      for (const ppfItem of jobCard.ppfs) {
+        if ((ppfItem as any).rollUsed > 0) {
+          // Find the PPF master and deduct from the first roll with enough stock
+          const ppfMaster = await PPFMasterModel.findById(ppfItem.id);
+          if (ppfMaster && ppfMaster.rolls && ppfMaster.rolls.length > 0) {
+            let remainingToDeduct = (ppfItem as any).rollUsed;
+            for (const roll of ppfMaster.rolls as any) {
+              if (roll.stock >= remainingToDeduct) {
+                roll.stock -= remainingToDeduct;
+                remainingToDeduct = 0;
+                break;
+              } else {
+                remainingToDeduct -= roll.stock;
+                roll.stock = 0;
+              }
+              if (remainingToDeduct <= 0) break;
+            }
+            ppfMaster.markModified("rolls");
+            await ppfMaster.save();
+          }
+        }
+      }
+    }
+
     return {
       ...j.toObject(),
       id: j._id.toString()

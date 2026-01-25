@@ -589,19 +589,15 @@ export default function AddJobPage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase">Available Stock (sqft)</label>
                     <div className="h-11 flex items-center px-3 border rounded-md bg-slate-50 font-medium text-slate-700">
-                      {selectedPPF ? `${currentPPF?.rolls?.reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0} sqft` : "Select PPF"}
+                      {selectedPPF ? (() => {
+                        const totalStock = currentPPF?.rolls?.reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0;
+                        const usedInCurrentJob = ppfFields.reduce((acc, field: any) => {
+                          const nameMatch = field.name.startsWith(currentPPF?.name);
+                          return nameMatch ? acc + (field.rollUsed || 0) : acc;
+                        }, 0);
+                        return `${totalStock - usedInCurrentJob} sqft`;
+                      })() : "Select PPF"}
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Quantity to Use (m)</label>
-                    <Input 
-                      type="number" 
-                      placeholder="Qty (m)" 
-                      value={rollQty || ""} 
-                      onChange={e => setRollQty(parseFloat(e.target.value))}
-                      className="h-11"
-                      disabled={!selectedPPF}
-                    />
                   </div>
                 </div>
                 {ppfFields.length > 0 && (
