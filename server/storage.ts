@@ -145,9 +145,9 @@ const jobCardMongoSchema = new mongoose.Schema({
   year: { type: String, required: true },
   licensePlate: { type: String, required: true },
   vin: { type: String },
-  services: [{ id: String, name: String, price: Number }],
-  ppfs: [{ id: String, name: String, price: Number }],
-  accessories: [{ id: String, name: String, price: Number }],
+  services: [{ id: String, name: String, price: Number, technician: String }],
+  ppfs: [{ id: String, name: String, price: Number, technician: String, rollUsed: Number }],
+  accessories: [{ id: String, name: String, price: Number, quantity: Number }],
   laborCharge: { type: Number, default: 0 },
   discount: { type: Number, default: 0 },
   gst: { type: Number, default: 18 },
@@ -155,7 +155,8 @@ const jobCardMongoSchema = new mongoose.Schema({
   status: { type: String, enum: ["Pending", "In Progress", "Completed", "Cancelled"], default: "Pending" },
   date: { type: String, required: true },
   estimatedCost: { type: Number, required: true },
-  technician: { type: String }
+  technician: { type: String },
+  vehicleType: { type: String }
 });
 
 export const JobCardModel = mongoose.model("JobCard", jobCardMongoSchema);
@@ -556,7 +557,8 @@ export class MongoStorage implements IStorage {
       id: j._id.toString(),
       services: j.services || [],
       ppfs: j.ppfs || [],
-      accessories: j.accessories || []
+      accessories: j.accessories || [],
+      vehicleType: (j as any).vehicleType // Ensure vehicleType is explicitly returned
     })) as JobCard[];
   }
 
@@ -625,13 +627,12 @@ export class MongoStorage implements IStorage {
       customerName: i.customerName,
       phone: i.phone,
       email: i.email || undefined,
-      services: i.services as any,
-      accessories: i.accessories as any,
+      vehicleInfo: i.vehicleInfo,
+      serviceInterest: i.serviceInterest,
+      source: i.source,
+      status: i.status as any,
       notes: i.notes || undefined,
-      ourPrice: i.ourPrice,
-      customerPrice: i.customerPrice,
-      date: i.date,
-      inquiryId: i.inquiryId
+      createdAt: i.date // using date field as createdAt
     }));
   }
 
@@ -648,13 +649,12 @@ export class MongoStorage implements IStorage {
       customerName: i.customerName,
       phone: i.phone,
       email: i.email || undefined,
-      services: i.services as any,
-      accessories: i.accessories as any,
+      vehicleInfo: i.vehicleInfo,
+      serviceInterest: i.serviceInterest,
+      source: i.source,
+      status: i.status as any,
       notes: i.notes || undefined,
-      ourPrice: i.ourPrice,
-      customerPrice: i.customerPrice,
-      date: i.date,
-      inquiryId: i.inquiryId
+      createdAt: i.date
     };
   }
 

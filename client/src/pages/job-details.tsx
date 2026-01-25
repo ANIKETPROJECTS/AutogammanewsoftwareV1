@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   XCircle,
   PlayCircle,
-  Trash2
+  Trash2,
+  Package
 } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -175,22 +176,24 @@ export default function JobDetailsPage() {
                   <CardTitle className="text-base font-bold">Vehicle Information</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Make / Model</p>
-                  <p className="text-base font-semibold text-slate-800 capitalize">{job.make} {job.model}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vehicle Type</p>
-                  <p className="text-base font-semibold text-slate-800">{job.vehicleType || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Year</p>
-                  <p className="text-base font-semibold text-slate-800">{job.year}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">License Plate</p>
-                  <p className="text-base font-semibold text-slate-800 uppercase">{job.licensePlate}</p>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Make / Model</p>
+                    <p className="text-base font-semibold text-slate-800 capitalize">{job.make} {job.model}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vehicle Type</p>
+                    <p className="text-base font-semibold text-slate-800">{job.vehicleType || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Year</p>
+                    <p className="text-base font-semibold text-slate-800">{job.year}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">License Plate</p>
+                    <p className="text-base font-semibold text-slate-800 uppercase">{job.licensePlate}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -241,6 +244,7 @@ export default function JobDetailsPage() {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
                         <p className="text-base font-semibold text-slate-800">
                           {(() => {
+                            if (ppf.technician) return ppf.technician;
                             if (job.technician) return job.technician;
                             
                             // Fallback: Parse from service name "Service Name - Tech: Technician Name"
@@ -261,7 +265,7 @@ export default function JobDetailsPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Quantity</p>
-                        <p className="text-base font-semibold text-slate-800">1</p>
+                        <p className="text-base font-semibold text-slate-800">{accessory.quantity || 1}</p>
                       </div>
                     </div>
                   ))}
@@ -291,6 +295,39 @@ export default function JobDetailsPage() {
                     <span className="text-lg font-black text-slate-900">₹{job.estimatedCost.toLocaleString()}</span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 overflow-hidden">
+              <CardHeader className="bg-slate-50/50 border-b py-3 px-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-red-600" />
+                  <CardTitle className="text-base font-bold">Additional Details</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Referral Source</p>
+                  <p className="text-base font-semibold text-slate-800">{job.referralSource}</p>
+                </div>
+                {job.referralSource === "Friend/Family" && (
+                  <>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Referrer Name</p>
+                      <p className="text-base font-semibold text-slate-800">{job.referrerName || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Referrer Phone</p>
+                      <p className="text-base font-semibold text-slate-800">{job.referrerPhone || "N/A"}</p>
+                    </div>
+                  </>
+                )}
+                {job.emailAddress && (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email Address</p>
+                    <p className="text-base font-semibold text-slate-800">{job.emailAddress}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

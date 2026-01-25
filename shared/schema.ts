@@ -165,6 +165,7 @@ export const jobCardItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   price: z.number(),
+  technician: z.string().optional(),
 });
 
 export const jobCardSchema = z.object({
@@ -182,8 +183,11 @@ export const jobCardSchema = z.object({
   licensePlate: z.string(),
   vehicleType: z.string().optional(),
   services: z.array(jobCardItemSchema.extend({ technician: z.string().optional() })).default([]),
-  ppfs: z.array(jobCardItemSchema).default([]),
-  accessories: z.array(jobCardItemSchema).default([]),
+  ppfs: z.array(jobCardItemSchema.extend({ 
+    technician: z.string().optional(),
+    rollUsed: z.number().optional()
+  })).default([]),
+  accessories: z.array(jobCardItemSchema.extend({ quantity: z.number().optional() })).default([]),
   laborCharge: z.number().default(0),
   discount: z.number().default(0),
   gst: z.number().default(18),
