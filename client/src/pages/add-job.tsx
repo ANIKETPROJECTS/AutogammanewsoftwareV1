@@ -366,9 +366,9 @@ export default function AddJobPage() {
                       <SelectValue placeholder="Select Roll (Optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      {currentPPF?.rolls?.map(r => (
-                        <SelectItem key={r.rollId} value={r.rollId}>
-                          {r.rollId} ({r.currentLength}m available)
+                      {currentPPF?.rolls?.map((r: any) => (
+                        <SelectItem key={r.id || r.name} value={r.id || r.name}>
+                          {r.name} ({r.stock}sqft available)
                         </SelectItem>
                       ))}
                     </SelectContent>
