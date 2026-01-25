@@ -15,13 +15,17 @@ import {
   Edit,
   CheckCircle2,
   XCircle,
-  PlayCircle
+  PlayCircle,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function JobDetailsPage() {
   const [, params] = useRoute("/job-cards/:id");
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const id = params?.id;
 
   const { data: jobCards = [], isLoading } = useQuery<JobCard[]>({
@@ -29,6 +33,43 @@ export default function JobDetailsPage() {
   });
 
   const job = jobCards.find(j => j.id === id);
+
+  const updateStatus = async (status: string) => {
+    try {
+      await apiRequest("PATCH", `/api/job-cards/${id}`, { status });
+      queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
+      toast({
+        title: "Status Updated",
+        description: `Job card has been marked as ${status}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteJob = async () => {
+    if (!confirm("Are you sure you want to delete this job card? This action cannot be undone.")) return;
+    
+    try {
+      await apiRequest("DELETE", `/api/job-cards/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
+      toast({
+        title: "Job Card Deleted",
+        description: "The job card has been successfully removed.",
+      });
+      setLocation("/job-cards");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete job card. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -90,9 +131,18 @@ export default function JobDetailsPage() {
               </p>
             </div>
           </div>
-          <Button variant="destructive" className="font-bold flex items-center gap-2">
-            <Edit className="h-4 w-4" /> Edit Job Card
-          </Button>
+            <div className="flex items-center gap-3">
+              <Button variant="destructive" className="font-bold flex items-center gap-2">
+                <Edit className="h-4 w-4" /> Edit Job Card
+              </Button>
+              <Button 
+                variant="outline" 
+                className="font-bold text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-2"
+                onClick={deleteJob}
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </Button>
+            </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -158,7 +208,9 @@ export default function JobDetailsPage() {
                     <div key={idx} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Service Type</p>
-                        <p className="text-base font-semibold text-slate-800">{service.name}</p>
+                        <p className="text-base font-semibold text-slate-800">
+                          {service.name.split(" - Tech:")[0]}
+                        </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
@@ -181,7 +233,9 @@ export default function JobDetailsPage() {
                     <div key={idx} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">PPF Service</p>
-                        <p className="text-base font-semibold text-slate-800">{ppf.name}</p>
+                        <p className="text-base font-semibold text-slate-800">
+                          {ppf.name.split(" - Tech:")[0]}
+                        </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
@@ -268,14 +322,29 @@ export default function JobDetailsPage() {
                 <CardTitle className="text-base font-bold">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-3">
-                <Button variant="outline" className="w-full justify-start font-semibold text-slate-700 h-10 border-slate-200">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start font-semibold text-slate-700 h-10 border-slate-200"
+                  onClick={() => updateStatus("In Progress")}
+                  disabled={job.status === "In Progress"}
+                >
                   <PlayCircle className="h-4 w-4 mr-2 text-blue-600" /> Mark as In Progress
                 </Button>
-                <Button variant="outline" className="w-full justify-start font-semibold text-green-700 hover:text-green-800 hover:bg-green-50 h-10 border-slate-200">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start font-semibold text-green-700 hover:text-green-800 hover:bg-green-50 h-10 border-slate-200"
+                  onClick={() => updateStatus("Completed")}
+                  disabled={job.status === "Completed"}
+                >
                   <CheckCircle2 className="h-4 w-4 mr-2" /> Mark as Completed
                 </Button>
                 <div className="pt-2">
-                  <Button variant="ghost" className="w-full justify-start font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 h-10">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 h-10"
+                    onClick={() => updateStatus("Cancelled")}
+                    disabled={job.status === "Cancelled"}
+                  >
                     <XCircle className="h-4 w-4 mr-2" /> Cancel Job
                   </Button>
                 </div>
