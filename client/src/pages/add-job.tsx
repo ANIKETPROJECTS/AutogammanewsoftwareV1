@@ -119,7 +119,7 @@ export default function AddJobPage() {
     if (s && selectedServiceVehicleType) {
       appendService({ 
         serviceId: s.id!, 
-        name: `${s.name} (${selectedServiceVehicleType})${tech ? ` - Tech: ${tech.name}` : ""}` 
+        name: `${s.name} (${selectedServiceVehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}` 
       });
       setSelectedService("");
       setSelectedServiceVehicleType("");
@@ -353,12 +353,13 @@ export default function AddJobPage() {
                     </Select>
                   </div>
                   <div className="md:col-span-2 space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Technician</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Technician (Optional)</label>
                     <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select Tech" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
                         {technicians.filter(t => t.status === "active").map(t => (
                           <SelectItem key={t.id} value={t.id!}>{t.name}</SelectItem>
                         ))}
