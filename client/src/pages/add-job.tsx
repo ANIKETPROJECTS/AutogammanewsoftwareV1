@@ -105,7 +105,6 @@ export default function AddJobPage() {
   const [selectedPPF, setSelectedPPF] = useState("");
   const [selectedPPFVehicleType, setSelectedPPFVehicleType] = useState("");
   const [selectedWarranty, setSelectedWarranty] = useState("");
-  const [selectedRoll, setSelectedRoll] = useState("");
   const [rollQty, setRollQty] = useState(0);
   const [selectedAccessoryCategory, setSelectedAccessoryCategory] = useState("");
   const [selectedAccessory, setSelectedAccessory] = useState("");
@@ -125,13 +124,11 @@ export default function AddJobPage() {
       appendPPF({ 
         ppfId: p.id!, 
         name: `${p.name} (${selectedPPFVehicleType} - ${selectedWarranty})`,
-        rollId: selectedRoll || undefined,
         rollUsed: rollQty > 0 ? rollQty : undefined
       });
       setSelectedPPF("");
       setSelectedPPFVehicleType("");
       setSelectedWarranty("");
-      setSelectedRoll("");
       setRollQty(0);
     }
   };
@@ -428,31 +425,22 @@ export default function AddJobPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Select Roll (Optional)</label>
-                    <Select value={selectedRoll} onValueChange={setSelectedRoll} disabled={!selectedPPF}>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select Roll" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currentPPF?.rolls?.map((r: any) => (
-                          <SelectItem key={r.id || r.name} value={r.id || r.name}>
-                            {r.name} ({r.stock}sqft available)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Available Stock (sqft)</label>
+                    <div className="h-11 flex items-center px-3 border rounded-md bg-slate-50 font-medium text-slate-700">
+                      {selectedPPF ? (currentPPF?.rolls?.reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0) : 0} sqft
+                    </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Quantity (m)</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Quantity to Use (m)</label>
                     <Input 
                       type="number" 
                       placeholder="Qty (m)" 
                       value={rollQty || ""} 
                       onChange={e => setRollQty(parseFloat(e.target.value))}
                       className="h-11"
-                      disabled={!selectedRoll}
+                      disabled={!selectedPPF}
                     />
                   </div>
                 </div>
@@ -464,9 +452,9 @@ export default function AddJobPage() {
                         <div key={field.id} className="flex items-center justify-between p-3">
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">{field.name}</span>
-                            {field.rollId && (
+                            {field.rollUsed && (
                               <span className="text-xs text-slate-500">
-                                Roll: {field.rollId} ({field.rollUsed}m)
+                                Quantity: {field.rollUsed}m
                               </span>
                             )}
                           </div>
