@@ -151,7 +151,19 @@ export default function JobCardsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technician</p>
-                      <p className="text-sm font-bold text-slate-700">{job.technician || job.services?.[0]?.technician || "Unassigned"}</p>
+                      <p className="text-sm font-bold text-slate-700">
+                        {(() => {
+                          if (job.technician) return job.technician;
+                          if (job.services?.[0]?.technician) return job.services[0].technician;
+                          
+                          // Fallback: Parse from service name "Service Name - Tech: Technician Name"
+                          const firstName = job.services?.[0]?.name || "";
+                          const techMatch = firstName.match(/- Tech:\s*(.+)$/i);
+                          if (techMatch) return techMatch[1].trim();
+                          
+                          return "Unassigned";
+                        })()}
+                      </p>
                     </div>
                   </div>
 
