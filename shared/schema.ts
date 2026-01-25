@@ -197,3 +197,23 @@ export const jobCardSchema = z.object({
 export type JobCard = z.infer<typeof jobCardSchema>;
 export const insertJobCardSchema = jobCardSchema.omit({ id: true, jobNo: true, date: true });
 export type InsertJobCard = z.infer<typeof insertJobCardSchema>;
+
+// Inquiry Schemas
+export const inquiryStatusSchema = z.enum(["NEW", "FOLLOW_UP", "CONVERTED", "LOST"]);
+export type InquiryStatus = z.infer<typeof inquiryStatusSchema>;
+
+export const inquirySchema = z.object({
+  id: z.string().optional(),
+  customerName: z.string().min(1),
+  phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+  vehicleInfo: z.string().min(1),
+  serviceInterest: z.string().min(1),
+  source: z.string().min(1),
+  status: inquiryStatusSchema.default("NEW"),
+  notes: z.string().optional(),
+  createdAt: z.string().default(() => new Date().toISOString()),
+});
+
+export type Inquiry = z.infer<typeof inquirySchema>;
+export const insertInquirySchema = inquirySchema.omit({ id: true, status: true, createdAt: true });
+export type InsertInquiry = z.infer<typeof insertInquirySchema>;
