@@ -58,13 +58,137 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 export default function InquiryPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [serviceFilter, setServiceFilter] = useState("ALL");
   const [isFormOpen, setIsFormOpen] = useState(false);
-
   const [viewingInquiry, setViewingInquiry] = useState<Inquiry | null>(null);
+
+  const handleDownloadPDF = (inquiry: Inquiry) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(220, 38, 38); // Red-600
+    doc.text("AUTO GAMMA", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text("Car Care Studio", 14, 28);
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text("QUOTATION", pageWidth - 14, 22, { align: "right" });
+    
+    doc.setFontSize(10);
+    doc.text(`ID: ${inquiry.inquiryId}`, pageWidth - 14, 28, { align: "right" });
+    doc.text(`Date: ${format(new Date(inquiry.date), "MMM dd, yyyy")}`, pageWidth - 14, 34, { align: "right" });
+
+    // Customer Info
+    doc.setDrawColor(226, 232, 240); // Slate-200
+    doc.line(14, 40, pageWidth - 14, 40);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("BILL TO:", 14, 50);
+    doc.setFont("helvetica", "normal");
+    doc.text(inquiry.customerName, 14, 56);
+    doc.text(inquiry.phone, 14, 61);
+    if (inquiry.email) doc.text(inquiry.email, 14, 66);
+
+    // Items Table
+    const tableData = [
+      ...inquiry.services.map(s => [
+        s.serviceName + (s.vehicleType ? ` (${s.vehicleType})` : ""),
+        s.warrantyName || "-",
+        `INR ${s.price.toLocaleString()}`,
+        `INR ${(s.customerPrice ?? s.price).toLocaleString()}`
+      ]),
+      ...inquiry.accessories.map(a => [
+        a.accessoryName + ` (${a.category})`,
+        "-",
+        `INR ${a.price.toLocaleString()}`,
+        `INR ${(a.customerPrice ?? a.price).toLocaleString()}`
+      ])
+    ];
+
+    autoTable(doc, {
+      startY: 75,
+      head: [["Service/Item", "Warranty", "Base Price", "Quoted Price"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [220, 38, 38], textColor: [255, 255, 255], fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 5 },
+      columnStyles: {
+        2: { halign: "right" },
+        3: { halign: "right" }
+      }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 75;
+
+    // Totals
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Quoted Price:", pageWidth - 60, finalY + 15);
+    doc.text(`INR ${inquiry.customerPrice.toLocaleString()}`, pageWidth - 14, finalY + 15, { align: "right" });
+
+    // Notes
+    if (inquiry.notes) {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Special Notes:", 14, finalY + 30);
+      doc.setFont("helvetica", "normal");
+      const splitNotes = doc.splitTextToSize(inquiry.notes, pageWidth - 28);
+      doc.text(splitNotes, 14, finalY + 36);
+    }
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Thank you for choosing Auto Gamma!", pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: "center" });
+
+    doc.save(`Quotation_${inquiry.inquiryId}.pdf`);
+  };
+
+  const handleSendWhatsApp = (inquiry: Inquiry) => {
+    const servicesList = [
+      ...inquiry.services.map(s => `- ${s.serviceName}${s.warrantyName ? ` (${s.warrantyName})` : ""}`),
+      ...inquiry.accessories.map(a => `- ${a.accessoryName}`)
+    ].join("\n");
+
+    const message = `Hi ${inquiry.customerName},
+
+Thank you for your interest in Auto Gamma Car Care Studio!
+
+*QUOTATION DETAILS:*
+ID: ${inquiry.inquiryId}
+Date: ${format(new Date(inquiry.date), "MMM dd, yyyy")}
+
+*SERVICES REQUESTED:*
+${servicesList || "General Inquiry"}
+
+*PRICING:*
+Our Quote: ₹${inquiry.ourPrice.toLocaleString()}
+Your Quote: ₹${inquiry.customerPrice.toLocaleString()}
+
+*SPECIAL NOTES:*
+${inquiry.notes || "No special notes"}
+
+Please let me know if you have any questions!
+
+Best regards,
+Auto Gamma Car Care Studio`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/91${inquiry.phone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+  };
 
   // Queries
   const { data: inquiries = [], isLoading } = useQuery<Inquiry[]>({
@@ -732,10 +856,20 @@ export default function InquiryPage() {
                           >
                             View
                           </Button>
-                          <Button variant="outline" size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white border-none h-9 text-xs font-bold uppercase">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white border-none h-9 text-xs font-bold uppercase"
+                            onClick={() => handleDownloadPDF(inquiry)}
+                          >
                             Download
                           </Button>
-                          <Button variant="outline" size="sm" className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white border-none h-9 text-xs font-bold uppercase">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white border-none h-9 text-xs font-bold uppercase"
+                            onClick={() => handleSendWhatsApp(inquiry)}
+                          >
                             Send
                           </Button>
                           <Button 
