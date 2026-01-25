@@ -31,6 +31,9 @@ const jobCardSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
   emailAddress: z.string().email().optional().or(z.literal("")),
+  referralSource: z.string().min(1, "Please select how you heard about us"),
+  referrerName: z.string().optional(),
+  referrerPhone: z.string().optional(),
   make: z.string().min(1, "Vehicle make is required"),
   model: z.string().min(1, "Vehicle model is required"),
   year: z.string().min(4, "Year must be 4 digits"),
@@ -68,6 +71,9 @@ export default function AddJobPage() {
       customerName: "",
       phoneNumber: "",
       emailAddress: "",
+      referralSource: "",
+      referrerName: "",
+      referrerPhone: "",
       make: "",
       model: "",
       year: "",
@@ -238,19 +244,75 @@ export default function AddJobPage() {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="emailAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-semibold text-slate-700">Email Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="john@example.com" {...field} className="h-11" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="emailAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">Email Address</FormLabel>
+                        <FormControl>
+                          <Input placeholder="john@example.com" {...field} className="h-11" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="referralSource"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-semibold text-slate-700">How did you hear about us?</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select referral source" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Google Search">Google Search</SelectItem>
+                              <SelectItem value="Social Media">Social Media</SelectItem>
+                              <SelectItem value="Friend/Family">Friend/Family</SelectItem>
+                              <SelectItem value="Advertisement">Advertisement</SelectItem>
+                              <SelectItem value="Walk-in">Walk-in</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {form.watch("referralSource") === "Friend/Family" && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="referrerName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold text-slate-700">Referrer's Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter name of the person who referred" {...field} className="h-11" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="referrerPhone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-semibold text-slate-700">Referrer's Phone Number</FormLabel>
+                              <FormControl>
+                                <Input placeholder="10-digit mobile number" {...field} className="h-11" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
+                  </div>
               </CardContent>
             </Card>
 
