@@ -54,7 +54,7 @@ const jobCardSchema = z.object({
   })),
   laborCharge: z.number().default(0),
   discount: z.number().default(0),
-  gst: z.number().default(0),
+  gst: z.number().default(18),
   serviceNotes: z.string().optional(),
 });
 
@@ -78,7 +78,7 @@ export default function AddJobPage() {
       accessories: [],
       laborCharge: 0,
       discount: 0,
-      gst: 0,
+      gst: 18,
       serviceNotes: "",
     },
   });
@@ -580,7 +580,7 @@ export default function AddJobPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-700">Labor Charge (₹)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11" />
+                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -593,7 +593,7 @@ export default function AddJobPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-700">Discount (₹)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11" />
+                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -606,7 +606,7 @@ export default function AddJobPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-700">GST (%)</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11" />
+                          <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
