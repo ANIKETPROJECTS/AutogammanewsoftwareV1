@@ -27,6 +27,16 @@ import { useToast } from "@/hooks/use-toast";
 import { ServiceMaster, PPFMaster, AccessoryMaster } from "@shared/schema";
 import { api } from "@shared/routes";
 import { useState } from "react";
+import { 
+  ChevronLeft, 
+  User, 
+  Car, 
+  Settings, 
+  Shield, 
+  Package, 
+  FileText, 
+  Trash2 
+} from "lucide-react";
 
 const jobCardSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
