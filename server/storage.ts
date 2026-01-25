@@ -621,7 +621,7 @@ export class MongoStorage implements IStorage {
   }
 
   async getInquiries(): Promise<Inquiry[]> {
-    const inquiries = await InquiryModel.find();
+    const inquiries = await InquiryModel.find().sort({ date: -1 });
     return inquiries.map(i => ({
       id: i._id.toString(),
       customerName: i.customerName,

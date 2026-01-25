@@ -227,7 +227,47 @@ export default function AddJobPage() {
   });
 
   const onSubmit = (data: JobCardFormValues) => {
-    createJobMutation.mutate(data);
+    const serviceData = data.services.map(field => {
+      const s = services.find(m => m.id === field.serviceId);
+      const vehiclePrice = s?.pricingByVehicleType?.find(v => v.vehicleType === data.vehicleType);
+      return {
+        id: field.serviceId,
+        name: field.name,
+        price: vehiclePrice?.price || field.price,
+        technician: field.technician
+      };
+    });
+
+    const ppfData = data.ppfs.map(field => {
+      const p = ppfMasters.find(m => m.id === field.ppfId);
+      const vehiclePrice = p?.pricingByVehicleType?.find(v => v.vehicleType === data.vehicleType);
+      const option = vehiclePrice?.options.find(o => o.warrantyName === field.warranty);
+      return {
+        id: field.ppfId,
+        name: field.name,
+        price: option?.price || field.price,
+        technician: field.technician,
+        rollUsed: field.rollUsed
+      };
+    });
+
+    const accessoryData = data.accessories.map(field => {
+      const a = accessories.find(m => m.id === field.accessoryId);
+      return {
+        id: field.accessoryId,
+        name: a?.name || "",
+        price: (a?.price || 0) * (field.quantity || 1),
+        quantity: field.quantity || 1
+      };
+    });
+
+    createJobMutation.mutate({
+      ...data,
+      services: serviceData,
+      ppfs: ppfData,
+      accessories: accessoryData,
+      estimatedCost: totalCost
+    });
   };
 
   const currentPPF = ppfMasters.find(p => p.id === selectedPPF);
