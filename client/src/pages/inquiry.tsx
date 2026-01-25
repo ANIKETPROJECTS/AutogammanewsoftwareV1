@@ -135,8 +135,12 @@ export default function InquiryPage() {
     // Totals
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Total Quoted Price:", pageWidth - 60, finalY + 15);
-    doc.text(`INR ${inquiry.customerPrice.toLocaleString()}`, pageWidth - 14, finalY + 15, { align: "right" });
+    const totalLabel = "Total Quoted Price:";
+    const totalValue = `INR ${inquiry.customerPrice.toLocaleString()}`;
+    
+    // Position total label more to the left and value more to the right to avoid overlap
+    doc.text(totalLabel, pageWidth - 100, finalY + 15);
+    doc.text(totalValue, pageWidth - 14, finalY + 15, { align: "right" });
 
     // Notes
     if (inquiry.notes) {
