@@ -558,7 +558,7 @@ export default function AddJobPage() {
                         <SelectValue placeholder="Select Warranty" />
                       </SelectTrigger>
                       <SelectContent>
-                        {selectedPPF && selectedPPFVehicleType && currentPPF?.pricingByVehicleType
+                        {currentPPF?.pricingByVehicleType
                           ?.find(v => v.vehicleType === selectedPPFVehicleType)
                           ?.options.map(o => (
                             <SelectItem key={o.warrantyName} value={o.warrantyName}>{o.warrantyName}</SelectItem>
