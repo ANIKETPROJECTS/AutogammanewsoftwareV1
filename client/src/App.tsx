@@ -53,6 +53,8 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
   return <Component />;
 }
 
+import AddJobPage from "@/pages/add-job";
+
 function Router() {
   return (
     <Switch>
@@ -68,7 +70,7 @@ function Router() {
         <ProtectedRoute component={InquiryPage} />
       </Route>
       <Route path="/job-cards"><ProtectedRoute component={DashboardPage} /></Route>
-      <Route path="/add-job"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/add-job"><ProtectedRoute component={AddJobPage} /></Route>
       <Route path="/invoice"><ProtectedRoute component={DashboardPage} /></Route>
       <Route path="/technicians"><ProtectedRoute component={TechniciansPage} /></Route>
       <Route path="/appointments"><ProtectedRoute component={AppointmentsPage} /></Route>
