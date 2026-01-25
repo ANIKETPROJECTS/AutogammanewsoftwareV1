@@ -98,10 +98,14 @@ export default function AddJobPage() {
   const { data: accessories = [] } = useQuery<AccessoryMaster[]>({
     queryKey: [api.masters.accessories.list.path],
   });
+  const { data: technicians = [] } = useQuery<any[]>({
+    queryKey: [api.masters.technicians.list.path],
+  });
 
   // Local selection states
   const [selectedService, setSelectedService] = useState("");
   const [selectedServiceVehicleType, setSelectedServiceVehicleType] = useState("");
+  const [selectedTechnician, setSelectedTechnician] = useState("");
   const [selectedPPF, setSelectedPPF] = useState("");
   const [selectedPPFVehicleType, setSelectedPPFVehicleType] = useState("");
   const [selectedWarranty, setSelectedWarranty] = useState("");
@@ -111,10 +115,15 @@ export default function AddJobPage() {
 
   const handleAddService = () => {
     const s = services.find(item => item.id === selectedService);
+    const tech = technicians.find(t => t.id === selectedTechnician);
     if (s && selectedServiceVehicleType) {
-      appendService({ serviceId: s.id!, name: `${s.name} (${selectedServiceVehicleType})` });
+      appendService({ 
+        serviceId: s.id!, 
+        name: `${s.name} (${selectedServiceVehicleType})${tech ? ` - Tech: ${tech.name}` : ""}` 
+      });
       setSelectedService("");
       setSelectedServiceVehicleType("");
+      setSelectedTechnician("");
     }
   };
 
@@ -330,7 +339,7 @@ export default function AddJobPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="md:col-span-4 space-y-1.5">
+                  <div className="md:col-span-3 space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
                     <Select value={selectedServiceVehicleType} onValueChange={setSelectedServiceVehicleType}>
                       <SelectTrigger className="h-11">
@@ -343,7 +352,20 @@ export default function AddJobPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Technician</label>
+                    <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select Tech" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {technicians.filter(t => t.status === "active").map(t => (
+                          <SelectItem key={t.id} value={t.id!}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
                     <Button type="button" onClick={handleAddService} className="w-full h-11 bg-red-100 text-red-600 hover:bg-red-200 border-none font-semibold">
                       Add Service
                     </Button>
