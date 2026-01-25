@@ -50,7 +50,6 @@ const jobCardSchema = z.object({
   year: z.string().min(4, "Year must be 4 digits"),
   licensePlate: z.string().min(1, "License plate is required"),
   vehicleType: z.string().min(1, "Vehicle type is required"),
-  vin: z.string().optional().or(z.literal("")),
   services: z.array(z.object({
     serviceId: z.string(),
     name: z.string(),
@@ -91,7 +90,6 @@ export default function AddJobPage() {
       year: "",
       licensePlate: "",
       vehicleType: "",
-      vin: "",
       services: [],
       ppfs: [],
       accessories: [],
@@ -432,7 +430,7 @@ export default function AddJobPage() {
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                   <FormField
                     control={form.control}
                     name="vehicleType"
@@ -451,19 +449,6 @@ export default function AddJobPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="vin"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-semibold text-slate-700">VIN (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="1HGBH41JXMN109186" {...field} className="h-11" />
-                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

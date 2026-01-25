@@ -125,14 +125,14 @@ export default function JobDetailsPage() {
                   <CardTitle className="text-base font-bold">Vehicle Information</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+              <CardContent className="p-6 grid grid-cols-2 md:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Make</p>
-                  <p className="text-base font-semibold text-slate-800">{job.make}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Make / Model</p>
+                  <p className="text-base font-semibold text-slate-800 capitalize">{job.make} {job.model}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Model</p>
-                  <p className="text-base font-semibold text-slate-800">{job.model}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vehicle Type</p>
+                  <p className="text-base font-semibold text-slate-800">{job.vehicleType || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Year</p>
@@ -140,14 +140,8 @@ export default function JobDetailsPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">License Plate</p>
-                  <p className="text-base font-semibold text-slate-800">{job.licensePlate}</p>
+                  <p className="text-base font-semibold text-slate-800 uppercase">{job.licensePlate}</p>
                 </div>
-                {job.vin && (
-                  <div className="col-span-2 md:col-span-4 mt-2">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">VIN</p>
-                    <p className="text-base font-semibold text-slate-800 font-mono tracking-wider">{job.vin}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
