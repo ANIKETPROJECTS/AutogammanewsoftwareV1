@@ -169,7 +169,16 @@ export default function JobDetailsPage() {
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
                         <p className="text-base font-semibold text-slate-800">
-                          {service.technician || job.technician || "Unassigned"}
+                          {(() => {
+                            if (service.technician) return service.technician;
+                            if (job.technician) return job.technician;
+                            
+                            // Fallback: Parse from service name "Service Name - Tech: Technician Name"
+                            const techMatch = service.name.match(/- Tech:\s*(.+)$/i);
+                            if (techMatch) return techMatch[1].trim();
+                            
+                            return "Unassigned";
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -182,7 +191,17 @@ export default function JobDetailsPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
-                        <p className="text-base font-semibold text-slate-800">{job.technician || "Unassigned"}</p>
+                        <p className="text-base font-semibold text-slate-800">
+                          {(() => {
+                            if (job.technician) return job.technician;
+                            
+                            // Fallback: Parse from service name "Service Name - Tech: Technician Name"
+                            const techMatch = ppf.name.match(/- Tech:\s*(.+)$/i);
+                            if (techMatch) return techMatch[1].trim();
+                            
+                            return "Unassigned";
+                          })()}
+                        </p>
                       </div>
                     </div>
                   ))}
