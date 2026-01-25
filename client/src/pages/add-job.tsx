@@ -429,7 +429,7 @@ export default function AddJobPage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase">Available Stock (sqft)</label>
                     <div className="h-11 flex items-center px-3 border rounded-md bg-slate-50 font-medium text-slate-700">
-                      {selectedPPF ? (currentPPF?.rolls?.reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0) : 0} sqft
+                      {selectedPPF ? `${currentPPF?.rolls?.reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0} sqft` : "Select PPF"}
                     </div>
                   </div>
                   <div className="space-y-1.5">
