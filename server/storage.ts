@@ -15,8 +15,8 @@ import {
   InsertTechnician,
   Appointment,
   InsertAppointment,
-  Inquiry,
-  InsertInquiry
+  JobCard,
+  InsertJobCard
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -129,6 +129,34 @@ const inquiryMongoSchema = new mongoose.Schema({
 });
 
 export const InquiryModel = mongoose.model("Inquiry", inquiryMongoSchema);
+
+const jobCardMongoSchema = new mongoose.Schema({
+  jobNo: { type: String, required: true, unique: true },
+  customerName: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  emailAddress: { type: String },
+  referralSource: { type: String, required: true },
+  referrerName: { type: String },
+  referrerPhone: { type: String },
+  make: { type: String, required: true },
+  model: { type: String, required: true },
+  year: { type: String, required: true },
+  licensePlate: { type: String, required: true },
+  vin: { type: String },
+  services: [{ id: String, name: String, price: Number }],
+  ppfs: [{ id: String, name: String, price: Number }],
+  accessories: [{ id: String, name: String, price: Number }],
+  laborCharge: { type: Number, default: 0 },
+  discount: { type: Number, default: 0 },
+  gst: { type: Number, default: 18 },
+  serviceNotes: { type: String },
+  status: { type: String, enum: ["Pending", "In Progress", "Completed", "Cancelled"], default: "Pending" },
+  date: { type: String, required: true },
+  estimatedCost: { type: Number, required: true },
+  technician: { type: String }
+});
+
+export const JobCardModel = mongoose.model("JobCard", jobCardMongoSchema);
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -515,6 +543,49 @@ export class MongoStorage implements IStorage {
 
   async deleteAppointment(id: string): Promise<boolean> {
     const result = await AppointmentModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  // Job Cards
+  async getJobCards(): Promise<JobCard[]> {
+    const jobs = await JobCardModel.find().sort({ date: -1 });
+    return jobs.map(j => ({
+      ...j.toObject(),
+      id: j._id.toString(),
+      services: j.services || [],
+      ppfs: j.ppfs || [],
+      accessories: j.accessories || []
+    })) as JobCard[];
+  }
+
+  async createJobCard(jobCard: InsertJobCard): Promise<JobCard> {
+    const count = await JobCardModel.countDocuments();
+    const year = new Date().getFullYear();
+    const jobNo = `JC-${year}-${(count + 1).toString().padStart(3, "0")}`;
+    
+    const j = new JobCardModel({
+      ...jobCard,
+      jobNo,
+      date: new Date().toISOString()
+    });
+    await j.save();
+    return {
+      ...j.toObject(),
+      id: j._id.toString()
+    } as JobCard;
+  }
+
+  async updateJobCard(id: string, jobCard: Partial<JobCard>): Promise<JobCard | undefined> {
+    const j = await JobCardModel.findByIdAndUpdate(id, jobCard, { new: true });
+    if (!j) return undefined;
+    return {
+      ...j.toObject(),
+      id: j._id.toString()
+    } as JobCard;
+  }
+
+  async deleteJobCard(id: string): Promise<boolean> {
+    const result = await JobCardModel.findByIdAndDelete(id);
     return !!result;
   }
 

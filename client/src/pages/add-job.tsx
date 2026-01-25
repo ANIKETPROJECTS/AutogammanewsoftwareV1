@@ -21,8 +21,10 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronLeft, User, Car, Settings, Shield, Package, Trash2 } from "lucide-react";
-import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { ServiceMaster, PPFMaster, AccessoryMaster } from "@shared/schema";
 import { api } from "@shared/routes";
 import { useState } from "react";
@@ -173,8 +175,43 @@ export default function AddJobPage() {
     }
   };
 
+  const { toast } = useToast();
+
+  const createJobMutation = useMutation({
+    mutationFn: async (values: JobCardFormValues) => {
+      const subtotal = [...values.services, ...values.ppfs, ...values.accessories].reduce((acc, curr) => acc + curr.price, 0) + values.laborCharge;
+      const afterDiscount = subtotal - values.discount;
+      const tax = afterDiscount * (values.gst / 100);
+      const estimatedCost = Math.round(afterDiscount + tax);
+
+      const payload = {
+        ...values,
+        estimatedCost,
+        status: "Pending"
+      };
+      
+      const res = await apiRequest("POST", "/api/job-cards", payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
+      toast({
+        title: "Success",
+        description: "Job card created successfully",
+      });
+      setLocation("/job-cards");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create job card",
+        variant: "destructive",
+      });
+    }
+  });
+
   const onSubmit = (data: JobCardFormValues) => {
-    console.log("Job card data:", data);
+    createJobMutation.mutate(data);
   };
 
   const currentPPF = ppfMasters.find(p => p.id === selectedPPF);

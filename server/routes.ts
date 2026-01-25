@@ -286,6 +286,29 @@ export async function registerRoutes(
     res.json({ message: "Appointment deleted" });
   });
 
+  // Job Cards Routes
+  app.get("/api/job-cards", async (req, res) => {
+    const jobs = await storage.getJobCards();
+    res.json(jobs);
+  });
+
+  app.post("/api/job-cards", async (req, res) => {
+    const job = await storage.createJobCard(req.body);
+    res.json(job);
+  });
+
+  app.patch("/api/job-cards/:id", async (req, res) => {
+    const job = await storage.updateJobCard(req.params.id, req.body);
+    if (!job) return res.status(404).json({ message: "Job card not found" });
+    res.json(job);
+  });
+
+  app.delete("/api/job-cards/:id", async (req, res) => {
+    const success = await storage.deleteJobCard(req.params.id);
+    if (!success) return res.status(404).json({ message: "Job card not found" });
+    res.json({ message: "Job card deleted" });
+  });
+
   // Inquiry Routes
   app.get("/api/inquiries", async (req, res) => {
     const inquiries = await storage.getInquiries();

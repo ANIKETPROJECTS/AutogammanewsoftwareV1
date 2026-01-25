@@ -157,38 +157,43 @@ export type Appointment = z.infer<typeof appointmentSchema>;
 export const insertAppointmentSchema = appointmentSchema.omit({ id: true, status: true, cancelReason: true });
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 
-// Inquiry Schemas
-export const inquiryServiceSchema = z.object({
-  serviceId: z.string(),
-  serviceName: z.string(),
-  vehicleType: z.string(),
-  warrantyName: z.string().optional(),
+// Job Card Schemas
+export const jobCardStatusSchema = z.enum(["Pending", "In Progress", "Completed", "Cancelled"]);
+export type JobCardStatus = z.infer<typeof jobCardStatusSchema>;
+
+export const jobCardItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
   price: z.number(),
-  customerPrice: z.number().optional(),
 });
 
-export const inquiryAccessorySchema = z.object({
-  accessoryId: z.string(),
-  accessoryName: z.string(),
-  category: z.string(),
-  price: z.number(),
-  customerPrice: z.number().optional(),
-});
-
-export const inquirySchema = z.object({
+export const jobCardSchema = z.object({
   id: z.string().optional(),
-  inquiryId: z.string(),
+  jobNo: z.string(),
   customerName: z.string().min(1),
-  phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
-  email: z.string().email().optional().or(z.literal("")),
-  services: z.array(inquiryServiceSchema).default([]),
-  accessories: z.array(inquiryAccessorySchema).default([]),
-  notes: z.string().optional(),
-  ourPrice: z.number(),
-  customerPrice: z.number(),
+  phoneNumber: z.string(),
+  emailAddress: z.string().optional(),
+  referralSource: z.string(),
+  referrerName: z.string().optional(),
+  referrerPhone: z.string().optional(),
+  make: z.string(),
+  model: z.string(),
+  year: z.string(),
+  licensePlate: z.string(),
+  vin: z.string().optional(),
+  services: z.array(jobCardItemSchema).default([]),
+  ppfs: z.array(jobCardItemSchema).default([]),
+  accessories: z.array(jobCardItemSchema).default([]),
+  laborCharge: z.number().default(0),
+  discount: z.number().default(0),
+  gst: z.number().default(18),
+  serviceNotes: z.string().optional(),
+  status: jobCardStatusSchema.default("Pending"),
   date: z.string().default(() => new Date().toISOString()),
+  estimatedCost: z.number(),
+  technician: z.string().optional(),
 });
 
-export type Inquiry = z.infer<typeof inquirySchema>;
-export const insertInquirySchema = inquirySchema.omit({ id: true, inquiryId: true, date: true });
-export type InsertInquiry = z.infer<typeof insertInquirySchema>;
+export type JobCard = z.infer<typeof jobCardSchema>;
+export const insertJobCardSchema = jobCardSchema.omit({ id: true, jobNo: true, date: true });
+export type InsertJobCard = z.infer<typeof insertJobCardSchema>;
