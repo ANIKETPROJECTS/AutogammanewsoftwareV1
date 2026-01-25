@@ -44,7 +44,9 @@ const jobCardSchema = z.object({
   emailAddress: z.string().email().optional().or(z.literal("")),
   referralSource: z.string().min(1, "Please select how you heard about us"),
   referrerName: z.string().optional(),
-  referrerPhone: z.string().optional(),
+  referrerPhone: z.string().optional().refine((val) => !val || /^\d{10}$/.test(val), {
+    message: "Referrer's phone number must be exactly 10 digits",
+  }),
   make: z.string().min(1, "Vehicle make is required"),
   model: z.string().min(1, "Vehicle model is required"),
   year: z.string().min(4, "Year must be 4 digits"),
@@ -355,7 +357,16 @@ export default function AddJobPage() {
                             <FormItem>
                               <FormLabel className="text-sm font-semibold text-slate-700">Referrer's Phone Number</FormLabel>
                               <FormControl>
-                                <Input placeholder="10-digit mobile number" {...field} className="h-11" />
+                                <Input 
+                                  placeholder="10-digit mobile number" 
+                                  {...field} 
+                                  className="h-11" 
+                                  maxLength={10}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, "");
+                                    field.onChange(value);
+                                  }}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
