@@ -99,7 +99,7 @@ export default function AddJobPage() {
     queryKey: [api.masters.accessories.list.path],
   });
   const { data: technicians = [] } = useQuery<any[]>({
-    queryKey: [api.masters.technicians.list.path],
+    queryKey: [api.technicians.list.path],
   });
 
   // Local selection states
