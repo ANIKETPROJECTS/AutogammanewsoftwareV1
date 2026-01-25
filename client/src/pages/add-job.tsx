@@ -502,12 +502,12 @@ export default function AddJobPage() {
                     <div className="bg-slate-50 p-3 text-xs font-bold uppercase text-slate-500 border-b">Selected Services</div>
                     <div className="divide-y">
                       {serviceFields.map((field, index) => (
-                          <div key={field.id} className="flex items-center justify-between p-3">
-                            <span className="text-sm font-medium">{(field as any).name}</span>
-                            <Button variant="ghost" size="icon" type="button" onClick={() => removeService(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        <div key={field.id} className="flex items-center justify-between p-3">
+                          <span className="text-sm font-medium">{(field as any).name}</span>
+                          <Button variant="ghost" size="icon" type="button" onClick={() => removeService(index)} className="h-8 w-8 text-slate-400 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -595,7 +595,7 @@ export default function AddJobPage() {
                 {ppfFields.length > 0 && (
                   <div className="border rounded-md overflow-hidden">
                     <div className="bg-slate-50 p-3 text-xs font-bold uppercase text-slate-500 border-b">Selected PPF</div>
-                    <div className="divide-y">
+                      {ppfFields.map((field, index) => (
                         <div key={field.id} className="flex items-center justify-between p-3">
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">{(field as any).name}</span>
@@ -609,7 +609,7 @@ export default function AddJobPage() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                    </div>
+                      ))}
                   </div>
                 )}
               </CardContent>
