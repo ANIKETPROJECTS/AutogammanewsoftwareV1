@@ -181,7 +181,7 @@ export const jobCardSchema = z.object({
   year: z.string(),
   licensePlate: z.string(),
   vin: z.string().optional(),
-  services: z.array(jobCardItemSchema).default([]),
+  services: z.array(jobCardItemSchema.extend({ technician: z.string().optional() })).default([]),
   ppfs: z.array(jobCardItemSchema).default([]),
   accessories: z.array(jobCardItemSchema).default([]),
   laborCharge: z.number().default(0),
