@@ -155,7 +155,11 @@ export default function JobCardsPage() {
                     </div>
                   </div>
 
-                  <Button variant="destructive" className="w-full rounded-none h-12 font-bold uppercase tracking-widest text-xs">
+                  <Button 
+                    variant="destructive" 
+                    className="w-full rounded-none h-12 font-bold uppercase tracking-widest text-xs"
+                    onClick={() => setLocation(`/job-cards/${job.id}`)}
+                  >
                     View Details
                   </Button>
                 </CardContent>

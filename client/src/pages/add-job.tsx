@@ -149,7 +149,8 @@ export default function AddJobPage() {
       appendService({ 
         serviceId: s.id!, 
         name: `${s.name} (${selectedServiceVehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}`,
-        price: vehiclePricing?.price || 0
+        price: vehiclePricing?.price || 0,
+        technician: tech?.name
       } as any);
       setSelectedService("");
       setSelectedServiceVehicleType("");
@@ -193,10 +194,14 @@ export default function AddJobPage() {
       const tax = afterDiscount * (values.gst / 100);
       const estimatedCost = Math.round(afterDiscount + tax);
 
+      // Extract technician from first service if available
+      const technician = values.services[0]?.technician;
+
       const payload = {
         ...values,
         estimatedCost,
-        status: "Pending"
+        status: "Pending",
+        technician
       };
       
       const res = await apiRequest("POST", "/api/job-cards", payload);
