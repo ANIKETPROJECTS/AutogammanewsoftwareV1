@@ -101,29 +101,36 @@ export default function AddJobPage() {
 
   // Local selection states
   const [selectedService, setSelectedService] = useState("");
+  const [selectedServiceVehicleType, setSelectedServiceVehicleType] = useState("");
   const [selectedPPF, setSelectedPPF] = useState("");
+  const [selectedPPFVehicleType, setSelectedPPFVehicleType] = useState("");
+  const [selectedWarranty, setSelectedWarranty] = useState("");
   const [selectedRoll, setSelectedRoll] = useState("");
   const [rollQty, setRollQty] = useState(0);
+  const [selectedAccessoryCategory, setSelectedAccessoryCategory] = useState("");
   const [selectedAccessory, setSelectedAccessory] = useState("");
 
   const handleAddService = () => {
     const s = services.find(item => item.id === selectedService);
-    if (s) {
-      appendService({ serviceId: s.id!, name: s.name });
+    if (s && selectedServiceVehicleType) {
+      appendService({ serviceId: s.id!, name: `${s.name} (${selectedServiceVehicleType})` });
       setSelectedService("");
+      setSelectedServiceVehicleType("");
     }
   };
 
   const handleAddPPF = () => {
     const p = ppfMasters.find(item => item.id === selectedPPF);
-    if (p) {
+    if (p && selectedPPFVehicleType && selectedWarranty) {
       appendPPF({ 
         ppfId: p.id!, 
-        name: p.name,
+        name: `${p.name} (${selectedPPFVehicleType} - ${selectedWarranty})`,
         rollId: selectedRoll || undefined,
         rollUsed: rollQty > 0 ? rollQty : undefined
       });
       setSelectedPPF("");
+      setSelectedPPFVehicleType("");
+      setSelectedWarranty("");
       setSelectedRoll("");
       setRollQty(0);
     }
@@ -142,6 +149,12 @@ export default function AddJobPage() {
   };
 
   const currentPPF = ppfMasters.find(p => p.id === selectedPPF);
+  const { data: vehicleTypes = [] } = useQuery<any[]>({
+    queryKey: [api.masters.vehicleTypes.list.path],
+  });
+  const { data: accessoryCategories = [] } = useQuery<any[]>({
+    queryKey: [api.masters.accessories.categories.list.path],
+  });
 
   return (
     <Layout>
@@ -306,8 +319,9 @@ export default function AddJobPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  <div className="md:col-span-5 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Service</label>
                     <Select value={selectedService} onValueChange={setSelectedService}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select Service" />
@@ -319,9 +333,24 @@ export default function AddJobPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="button" onClick={handleAddService} className="h-11 bg-red-600 hover:bg-red-700">
-                    Add Service
-                  </Button>
+                  <div className="md:col-span-4 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
+                    <Select value={selectedServiceVehicleType} onValueChange={setSelectedServiceVehicleType}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vehicleTypes.map(v => (
+                          <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Button type="button" onClick={handleAddService} className="w-full h-11 bg-red-100 text-red-600 hover:bg-red-200 border-none font-semibold">
+                      Add Service
+                    </Button>
+                  </div>
                 </div>
                 {serviceFields.length > 0 && (
                   <div className="border rounded-md overflow-hidden">
@@ -350,30 +379,73 @@ export default function AddJobPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  <div className="md:col-span-3 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">PPF</label>
+                    <Select value={selectedPPF} onValueChange={setSelectedPPF}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select PPF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ppfMasters.map(p => (
+                          <SelectItem key={p.id} value={p.id!}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Vehicle Type</label>
+                    <Select value={selectedPPFVehicleType} onValueChange={setSelectedPPFVehicleType}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vehicleTypes.map(v => (
+                          <SelectItem key={v.id} value={v.name}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Warranty</label>
+                    <Select value={selectedWarranty} onValueChange={setSelectedWarranty} disabled={!selectedPPF || !selectedPPFVehicleType}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select Warranty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedPPF && selectedPPFVehicleType && currentPPF?.pricingByVehicleType
+                          ?.find(v => v.vehicleType === selectedPPFVehicleType)
+                          ?.options.map(o => (
+                            <SelectItem key={o.warrantyName} value={o.warrantyName}>{o.warrantyName}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Button type="button" onClick={handleAddPPF} className="w-full h-11 bg-red-100 text-red-600 hover:bg-red-200 border-none font-semibold">
+                      Add PPF
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Select value={selectedPPF} onValueChange={setSelectedPPF}>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Select PPF" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ppfMasters.map(p => (
-                        <SelectItem key={p.id} value={p.id!}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={selectedRoll} onValueChange={setSelectedRoll} disabled={!selectedPPF}>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Select Roll (Optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currentPPF?.rolls?.map((r: any) => (
-                        <SelectItem key={r.id || r.name} value={r.id || r.name}>
-                          {r.name} ({r.stock}sqft available)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Select Roll (Optional)</label>
+                    <Select value={selectedRoll} onValueChange={setSelectedRoll} disabled={!selectedPPF}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select Roll" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currentPPF?.rolls?.map((r: any) => (
+                          <SelectItem key={r.id || r.name} value={r.id || r.name}>
+                            {r.name} ({r.stock}sqft available)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Quantity (m)</label>
                     <Input 
                       type="number" 
                       placeholder="Qty (m)" 
@@ -382,9 +454,6 @@ export default function AddJobPage() {
                       className="h-11"
                       disabled={!selectedRoll}
                     />
-                    <Button type="button" onClick={handleAddPPF} className="h-11 bg-red-600 hover:bg-red-700">
-                      Add PPF
-                    </Button>
                   </div>
                 </div>
                 {ppfFields.length > 0 && (
@@ -421,22 +490,38 @@ export default function AddJobPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <Select value={selectedAccessory} onValueChange={setSelectedAccessory}>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  <div className="md:col-span-5 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Accessory Category</label>
+                    <Select value={selectedAccessoryCategory} onValueChange={setSelectedAccessoryCategory}>
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select Accessory" />
+                        <SelectValue placeholder="Accessory Category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {accessories.map(a => (
+                        {accessoryCategories.map(c => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-4 space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Accessory Name</label>
+                    <Select value={selectedAccessory} onValueChange={setSelectedAccessory} disabled={!selectedAccessoryCategory}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Accessory Name" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accessories.filter(a => a.category === selectedAccessoryCategory).map(a => (
                           <SelectItem key={a.id} value={a.id!}>{a.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="button" onClick={handleAddAccessory} className="h-11 bg-red-600 hover:bg-red-700">
-                    Add Accessory
-                  </Button>
+                  <div className="md:col-span-3">
+                    <Button type="button" onClick={handleAddAccessory} className="w-full h-11 bg-red-100 text-red-600 hover:bg-red-200 border-none font-semibold">
+                      Add Accessory
+                    </Button>
+                  </div>
                 </div>
                 {accessoryFields.length > 0 && (
                   <div className="border rounded-md overflow-hidden">
