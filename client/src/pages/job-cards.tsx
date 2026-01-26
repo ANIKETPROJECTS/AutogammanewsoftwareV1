@@ -173,13 +173,22 @@ export default function JobCardsPage() {
                     </div>
                   </div>
 
-                  <Button 
-                    variant="destructive" 
-                    className="w-full rounded-none h-12 font-bold uppercase tracking-widest text-xs"
-                    onClick={() => setLocation(`/job-cards/${job.id}`)}
-                  >
-                    View Details
-                  </Button>
+                  <div className="flex p-2 gap-2 border-t bg-slate-50/30">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 h-10 font-bold uppercase tracking-widest text-[10px]"
+                      onClick={() => setLocation(`/job-cards/${job.id}`)}
+                    >
+                      View Details
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      className="flex-1 h-10 font-bold uppercase tracking-widest text-[10px]"
+                      onClick={() => setLocation(`/add-job?id=${job.id}`)}
+                    >
+                      Edit Job Card
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

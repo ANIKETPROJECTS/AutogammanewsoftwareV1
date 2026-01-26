@@ -276,9 +276,7 @@ export default function AddJobPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
-      if (jobId) {
-        queryClient.invalidateQueries({ queryKey: ["/api/job-cards", jobId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/job-cards", jobId] });
       queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
       toast({
         title: "Success",
