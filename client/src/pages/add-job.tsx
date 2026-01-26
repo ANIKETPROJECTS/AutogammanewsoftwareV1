@@ -151,7 +151,7 @@ export default function AddJobPage() {
     if (s && vehicleType) {
       appendService({ 
         serviceId: s.id!, 
-        name: `${s.name} (${vehicleType})${tech && selectedTechnician !== "none" ? ` - Tech: ${tech.name}` : ""}`,
+        name: `${s.name} (${vehicleType})`,
         price: vehiclePricing?.price || 0,
         technician: tech?.name
       } as any);
@@ -171,7 +171,8 @@ export default function AddJobPage() {
         ppfId: p.id!, 
         name: `${p.name} (${vehicleType} - ${selectedWarranty})`,
         rollUsed: rollQty > 0 ? rollQty : undefined,
-        price: option?.price || 0
+        price: option?.price || 0,
+        technician: tech?.name
       } as any);
       setSelectedPPF("");
       setSelectedWarranty("");

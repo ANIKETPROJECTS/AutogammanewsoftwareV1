@@ -136,7 +136,7 @@ export default function JobCardsPage() {
                       </div>
                       <div>
                         <p className="font-bold text-slate-800">
-                          {job.services[0]?.name || job.ppfs[0]?.name || job.accessories[0]?.name || "General Service"}
+                          {(job.services[0]?.name || job.ppfs[0]?.name || job.accessories[0]?.name || "General Service").split(" - Tech:")[0]}
                         </p>
                         <p className="text-xs text-muted-foreground line-clamp-2">
                           {job.services.length + job.ppfs.length + job.accessories.length > 1 
