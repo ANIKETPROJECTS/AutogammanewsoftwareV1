@@ -254,6 +254,7 @@ export default function AddJobPage() {
 
   const createJobMutation = useMutation({
     mutationFn: async (values: JobCardFormValues) => {
+      console.log("Mutation starting - Payload:", values);
       const subtotal = [...values.services, ...values.ppfs, ...values.accessories].reduce((acc, curr) => acc + curr.price, 0) + values.laborCharge;
       const afterDiscount = subtotal - values.discount;
       const tax = afterDiscount * (values.gst / 100);
@@ -271,8 +272,11 @@ export default function AddJobPage() {
       
       const method = jobId ? "PATCH" : "POST";
       const url = jobId ? `/api/job-cards/${jobId}` : "/api/job-cards";
+      console.log(`Sending ${method} request to ${url}`);
       const res = await apiRequest(method, url, payload);
-      return res.json();
+      const result = await res.json();
+      console.log("API Response:", result);
+      return result;
     },
     onSuccess: (data) => {
       console.log("Mutation successful", data);
@@ -296,11 +300,21 @@ export default function AddJobPage() {
   });
 
   const onSubmit = (data: JobCardFormValues) => {
-    console.log("Form submitted", data);
+    console.log("Form submitted - Values:", data);
+    
+    // Check for form errors
+    const errors = form.formState.errors;
+    if (Object.keys(errors).length > 0) {
+      console.warn("Form validation errors:", errors);
+    }
+
     const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + (curr.price || 0), 0) + (data.laborCharge || 0);
     const afterDiscount = subtotal - (data.discount || 0);
     const tax = afterDiscount * ((data.gst || 18) / 100);
     const totalCost = Math.round(afterDiscount + tax);
+
+    console.log("Calculated Total Cost:", totalCost);
+    console.log("Calling mutation with jobId:", jobId);
 
     createJobMutation.mutate({
       ...data,
