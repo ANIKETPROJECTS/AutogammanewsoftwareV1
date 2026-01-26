@@ -268,6 +268,24 @@ export default function AddJobPage() {
       return;
     }
 
+    // Calculate available stock
+    const totalStock = p?.rolls?.reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0;
+    const usedInCurrentJob = ppfFields.reduce((acc, field: any) => {
+      const nameMatch = field.name.startsWith(p?.name);
+      return nameMatch ? acc + (field.rollUsed || 0) : acc;
+    }, 0);
+    const availableStock = totalStock - usedInCurrentJob;
+
+    // Validate quantity doesn't exceed available stock
+    if (rollQty > availableStock) {
+      toast({
+        title: "Insufficient Stock",
+        description: `Only ${availableStock} sqft available. You entered ${rollQty} sqft.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const vehiclePricing = p?.pricingByVehicleType.find(v => v.vehicleType === vehicleType);
     const option = vehiclePricing?.options.find(o => o.warrantyName === selectedWarranty);
     
