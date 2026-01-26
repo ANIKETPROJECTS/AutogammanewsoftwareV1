@@ -88,9 +88,12 @@ export default function AddJobPage() {
   const { data: jobToEdit, isLoading: isLoadingJob } = useQuery<JobCard>({
     queryKey: ["/api/job-cards", jobId],
     queryFn: async () => {
+      console.log("Fetching job for edit, jobId:", jobId);
       const res = await fetch(`/api/job-cards/${jobId}`);
       if (!res.ok) throw new Error("Failed to fetch job");
-      return res.json();
+      const data = await res.json();
+      console.log("Fetched job data:", data);
+      return data;
     },
     enabled: !!jobId,
   });
@@ -316,42 +319,54 @@ export default function AddJobPage() {
     }
   });
 
-  const onSubmit = (data: JobCardFormValues) => {
+  const onSubmit = async (data: JobCardFormValues) => {
     console.log("Form submitted - Values:", data);
     
-    // Check for form errors
-    const errors = form.formState.errors;
-    if (Object.keys(errors).length > 0) {
-      console.warn("Form validation errors:", errors);
-      toast({
-        title: "Validation Error",
-        description: "Please check the form for errors.",
-        variant: "destructive",
-      });
-      return;
-    }
+    try {
+      console.log("Starting manual validation...");
+      const isValid = await form.trigger();
+      console.log("Manual validation result:", isValid);
+      
+      if (!isValid) {
+        const errors = form.formState.errors;
+        console.warn("Validation failed with errors:", errors);
+        
+        // Find first error and scroll to it
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField) {
+          const errorElement = document.querySelector(`[name="${firstErrorField}"]`) || 
+                               document.querySelector(`[id*="${firstErrorField}"]`);
+          if (errorElement) {
+            errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
 
-    const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + (curr.price || 0), 0) + (data.laborCharge || 0);
-    const afterDiscount = subtotal - (data.discount || 0);
-    const tax = afterDiscount * ((data.gst || 18) / 100);
-    const totalCost = Math.round(afterDiscount + tax);
-
-    console.log("Calculated Total Cost:", totalCost);
-    console.log("Calling mutation with jobId:", jobId);
-
-    createJobMutation.mutate({
-      ...data,
-      services: data.services.map(s => ({ ...s, price: Number(s.price) })),
-      ppfs: data.ppfs.map(p => ({ ...p, price: Number(p.price) })),
-      accessories: data.accessories.map(a => ({ ...a, price: Number(a.price) })),
-      laborCharge: Number(data.laborCharge),
-      discount: Number(data.discount),
-      gst: Number(data.gst),
-    }, {
-      onError: (error) => {
-        console.error("Manual mutation error catch:", error);
+        toast({
+          title: "Validation Error",
+          description: "Please check the required fields highlighted in red.",
+          variant: "destructive",
+        });
+        return;
       }
-    });
+
+      console.log("Form is valid, executing mutation...");
+      const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + (curr.price || 0), 0) + (data.laborCharge || 0);
+      const afterDiscount = subtotal - (data.discount || 0);
+      const tax = afterDiscount * ((data.gst || 18) / 100);
+      const totalCost = Math.round(afterDiscount + tax);
+
+      createJobMutation.mutate({
+        ...data,
+        services: data.services.map(s => ({ ...s, price: Number(s.price) })),
+        ppfs: data.ppfs.map(p => ({ ...p, price: Number(p.price) })),
+        accessories: data.accessories.map(a => ({ ...a, price: Number(a.price) })),
+        laborCharge: Number(data.laborCharge),
+        discount: Number(data.discount),
+        gst: Number(data.gst),
+      });
+    } catch (err) {
+      console.error("Submit handler error:", err);
+    }
   };
 
   const currentPPF = ppfMasters.find(p => p.id === selectedPPF);
@@ -463,7 +478,7 @@ export default function AddJobPage() {
                       )}
                     />
                     {form.watch("referralSource") === "Friend/Family" && (
-                      <>
+                      <div className="contents">
                         <FormField
                           control={form.control}
                           name="referrerName"
@@ -499,7 +514,7 @@ export default function AddJobPage() {
                             </FormItem>
                           )}
                         />
-                      </>
+                      </div>
                     )}
                   </div>
               </CardContent>
