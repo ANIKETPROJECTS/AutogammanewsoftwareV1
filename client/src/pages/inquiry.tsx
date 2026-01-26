@@ -86,8 +86,8 @@ export default function InquiryPage() {
     doc.text("QUOTATION", pageWidth - 14, 22, { align: "right" });
     
     doc.setFontSize(10);
-    doc.text(`ID: ${inquiry.inquiryId}`, pageWidth - 14, 28, { align: "right" });
-    doc.text(`Date: ${format(new Date(inquiry.date || inquiry.createdAt || new Date()), "MMM dd, yyyy")}`, pageWidth - 14, 34, { align: "right" });
+    doc.text(`ID: ${inquiry.inquiryId || "N/A"}`, pageWidth - 14, 28, { align: "right" });
+    doc.text(`Date: ${format(new Date(inquiry.createdAt || new Date()), "MMM dd, yyyy")}`, pageWidth - 14, 34, { align: "right" });
 
     // Customer Info
     doc.setDrawColor(226, 232, 240); // Slate-200
@@ -97,8 +97,8 @@ export default function InquiryPage() {
     doc.setFont("helvetica", "bold");
     doc.text("BILL TO:", 14, 50);
     doc.setFont("helvetica", "normal");
-    doc.text(inquiry.customerName, 14, 56);
-    doc.text(inquiry.phone, 14, 61);
+    doc.text(inquiry.customerName || "N/A", 14, 56);
+    doc.text(inquiry.phone || "N/A", 14, 61);
     if (inquiry.email) doc.text(inquiry.email, 14, 66);
 
     // Items Table
@@ -136,7 +136,7 @@ export default function InquiryPage() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     const totalLabel = "Total Quoted Price:";
-    const totalValue = `INR ${inquiry.customerPrice.toLocaleString()}`;
+    const totalValue = `INR ${(inquiry.customerPrice || 0).toLocaleString()}`;
     
     // Position total label more to the left and value more to the right to avoid overlap
     doc.text(totalLabel, pageWidth - 100, finalY + 15);
@@ -157,7 +157,7 @@ export default function InquiryPage() {
     doc.setTextColor(150, 150, 150);
     doc.text("Thank you for choosing Auto Gamma!", pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: "center" });
 
-    doc.save(`Quotation_${inquiry.inquiryId}.pdf`);
+    doc.save(`Quotation_${inquiry.inquiryId || "unknown"}.pdf`);
   };
 
   const handleSendWhatsApp = (inquiry: Inquiry) => {
@@ -171,8 +171,8 @@ export default function InquiryPage() {
 Thank you for your interest in Auto Gamma Car Care Studio!
 
 *QUOTATION DETAILS:*
-ID: ${inquiry.inquiryId}
-Date: ${format(new Date(inquiry.date || inquiry.createdAt || new Date()), "MMM dd, yyyy")}
+ID: ${inquiry.inquiryId || "N/A"}
+Date: ${format(new Date(inquiry.createdAt || new Date()), "MMM dd, yyyy")}
 
 *SERVICES REQUESTED:*
 ${servicesList || "General Inquiry"}
@@ -830,7 +830,7 @@ Auto Gamma Car Care Studio`;
                       <div className="space-y-3">
                         <div className="flex justify-between items-center text-[10px] font-medium text-slate-400">
                           <span>Inquiry ID: {inquiry.inquiryId}</span>
-                          <span>Date: {format(new Date(inquiry.date), "MMMM dd, yyyy")}</span>
+                          <span>Date: {format(new Date(inquiry.createdAt || new Date()), "MMMM dd, yyyy")}</span>
                         </div>
                         <div className="flex gap-2">
                           <Button 
