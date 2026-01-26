@@ -781,17 +781,17 @@ Auto Gamma Car Care Studio`;
                       <div className="space-y-1">
                         <p className="text-[10px] font-bold text-slate-400 uppercase">Services Requested</p>
                         <div className="bg-slate-50 p-2 rounded-md border border-slate-100 min-h-[40px] flex flex-wrap gap-2">
-                          {inquiry.services.map((s, idx) => (
+                          {(inquiry.services || []).map((s, idx) => (
                             <Badge key={idx} variant="secondary" className="bg-white text-slate-700 border-slate-200">
                               {s.serviceName} ({s.vehicleType})
                             </Badge>
                           ))}
-                          {inquiry.accessories.map((a, idx) => (
+                          {(inquiry.accessories || []).map((a, idx) => (
                             <Badge key={idx} variant="secondary" className="bg-white text-slate-700 border-slate-200">
                               {a.accessoryName}
                             </Badge>
                           ))}
-                          {inquiry.services.length === 0 && inquiry.accessories.length === 0 && (
+                          {(!inquiry.services || inquiry.services.length === 0) && (!inquiry.accessories || inquiry.accessories.length === 0) && (
                             <span className="text-sm text-muted-foreground italic">No items requested</span>
                           )}
                         </div>
@@ -810,11 +810,11 @@ Auto Gamma Car Care Studio`;
                       <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex-1 grid grid-cols-3 gap-4">
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase">Our Price</p>
-                          <p className="text-base font-bold">₹{inquiry.ourPrice.toLocaleString()}</p>
+                          <p className="text-base font-bold">₹{(inquiry.ourPrice || 0).toLocaleString()}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase">Customer Price</p>
-                          <p className="text-base font-bold">₹{inquiry.customerPrice.toLocaleString()}</p>
+                          <p className="text-base font-bold">₹{(inquiry.customerPrice || 0).toLocaleString()}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase">Difference</p>
