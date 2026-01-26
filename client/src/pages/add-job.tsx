@@ -38,47 +38,32 @@ import {
   Trash2 
 } from "lucide-react";
 
-const jobCardSchema = z.object({
-  customerName: z.string().min(1, "Customer name is required"),
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-  emailAddress: z.string().email().optional().or(z.literal("")),
-  referralSource: z.string().min(1, "Please select how you heard about us"),
-  referrerName: z.string().optional(),
-  referrerPhone: z.string().optional().refine((val) => !val || /^\d{10}$/.test(val), {
-    message: "Referrer's phone number must be exactly 10 digits",
-  }),
-  make: z.string().min(1, "Vehicle make is required"),
-  model: z.string().min(1, "Vehicle model is required"),
-  year: z.string().min(4, "Year must be 4 digits"),
-  licensePlate: z.string().min(1, "License plate is required"),
-  vehicleType: z.string().min(1, "Vehicle type is required"),
-  services: z.array(z.object({
-    serviceId: z.string(),
-    name: z.string(),
-    price: z.number(),
+  const jobCardSchema = z.object({
+    customerName: z.string().min(1, "Customer name is required"),
+    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+    emailAddress: z.string().optional().or(z.literal("")),
+    referralSource: z.string().min(1, "Referral source is required"),
+    referrerName: z.string().optional().or(z.literal("")),
+    referrerPhone: z.string().optional().or(z.literal("")),
+    make: z.string().min(1, "Vehicle make is required"),
+    model: z.string().min(1, "Vehicle model is required"),
+    year: z.string().min(1, "Vehicle year is required"),
+    licensePlate: z.string().min(1, "License plate is required"),
+    vehicleType: z.string().optional(),
+    services: z.array(z.any()).default([]),
+    ppfs: z.array(z.any()).default([]),
+    accessories: z.array(z.any()).default([]),
+    laborCharge: z.coerce.number().default(0),
+    discount: z.coerce.number().default(0),
+    gst: z.coerce.number().default(18),
+    serviceNotes: z.string().optional().or(z.literal("")),
+    status: z.string().optional(),
+    date: z.string().optional(),
+    estimatedCost: z.number().optional(),
     technician: z.string().optional(),
-  })),
-  ppfs: z.array(z.object({
-    ppfId: z.string(),
-    name: z.string(),
-    rollUsed: z.number().optional(),
-    price: z.number(),
-    technician: z.string().optional(),
-    warranty: z.string().optional(),
-  })),
-  accessories: z.array(z.object({
-    accessoryId: z.string(),
-    name: z.string(),
-    price: z.number(),
-    quantity: z.number().optional().default(1),
-  })),
-  laborCharge: z.number().default(0),
-  discount: z.number().default(0),
-  gst: z.number().default(18),
-  serviceNotes: z.string().optional(),
-});
+  });
 
-type JobCardFormValues = z.infer<typeof jobCardSchema>;
+  type JobCardFormValues = z.infer<typeof jobCardSchema>;
 
 export default function AddJobPage() {
   const [, setLocation] = useLocation();
@@ -208,9 +193,19 @@ export default function AddJobPage() {
     const s = services.find(item => item.id === selectedService);
     const tech = technicians.find(t => t.id === selectedTechnician);
     const vehicleType = form.getValues("vehicleType");
+    
+    if (!vehicleType) {
+      toast({
+        title: "Vehicle Type Required",
+        description: "Please select a Vehicle Type in the Vehicle Information section first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const vehiclePricing = s?.pricingByVehicleType.find(p => p.vehicleType === vehicleType);
     
-    if (s && vehicleType) {
+    if (s) {
       appendService({ 
         serviceId: s.id!, 
         name: `${s.name} (${vehicleType})`,
@@ -226,10 +221,20 @@ export default function AddJobPage() {
     const p = ppfMasters.find(item => item.id === selectedPPF);
     const tech = technicians.find(t => t.id === selectedTechnician);
     const vehicleType = form.getValues("vehicleType");
+
+    if (!vehicleType) {
+      toast({
+        title: "Vehicle Type Required",
+        description: "Please select a Vehicle Type in the Vehicle Information section first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const vehiclePricing = p?.pricingByVehicleType.find(v => v.vehicleType === vehicleType);
     const option = vehiclePricing?.options.find(o => o.warrantyName === selectedWarranty);
     
-    if (p && vehicleType && selectedWarranty) {
+    if (p && selectedWarranty) {
       appendPPF({ 
         ppfId: p.id!, 
         name: `${p.name} (${vehicleType} - ${selectedWarranty})`,
@@ -331,6 +336,14 @@ export default function AddJobPage() {
         const errors = form.formState.errors;
         console.warn("Validation failed with errors:", errors);
         
+        // Detailed error logging
+        Object.entries(errors).forEach(([field, error]: [any, any]) => {
+          console.error(`Field "${field}" has error:`, error.message || error.type || error);
+          if (error.root) {
+             console.error(`Root error for ${field}:`, error.root);
+          }
+        });
+        
         // Find first error and scroll to it
         const firstErrorField = Object.keys(errors)[0];
         if (firstErrorField) {
@@ -350,20 +363,24 @@ export default function AddJobPage() {
       }
 
       console.log("Form is valid, executing mutation...");
-      const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + (curr.price || 0), 0) + (data.laborCharge || 0);
-      const afterDiscount = subtotal - (data.discount || 0);
-      const tax = afterDiscount * ((data.gst || 18) / 100);
+      
+      const subtotal = [...(data.services || []), ...(data.ppfs || []), ...(data.accessories || [])].reduce((acc, curr) => acc + (Number(curr.price) || 0), 0) + (Number(data.laborCharge) || 0);
+      const afterDiscount = subtotal - (Number(data.discount) || 0);
+      const tax = afterDiscount * ((Number(data.gst) || 18) / 100);
       const totalCost = Math.round(afterDiscount + tax);
 
-      createJobMutation.mutate({
+      const formattedData = {
         ...data,
-        services: data.services.map(s => ({ ...s, price: Number(s.price) })),
-        ppfs: data.ppfs.map(p => ({ ...p, price: Number(p.price) })),
-        accessories: data.accessories.map(a => ({ ...a, price: Number(a.price) })),
+        services: (data.services || []).map(s => ({ ...s, price: Number(s.price) })),
+        ppfs: (data.ppfs || []).map(p => ({ ...p, price: Number(p.price) })),
+        accessories: (data.accessories || []).map(a => ({ ...a, price: Number(a.price) })),
         laborCharge: Number(data.laborCharge),
         discount: Number(data.discount),
         gst: Number(data.gst),
-      });
+      };
+
+      console.log("Sending formatted data:", formattedData);
+      createJobMutation.mutate(formattedData);
     } catch (err) {
       console.error("Submit handler error:", err);
     }
@@ -416,9 +433,17 @@ export default function AddJobPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-700">Customer Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="John Doe" {...field} className="h-11" />
+                          <Input 
+                            placeholder="John Doe" 
+                            {...field} 
+                            className={`h-11 ${form.formState.errors.customerName ? "border-red-500 ring-1 ring-red-500 bg-red-50" : ""}`} 
+                          />
                         </FormControl>
-                        <FormMessage />
+                        {form.formState.errors.customerName && (
+                          <p className="text-xs font-bold text-red-600 mt-1">
+                            {form.formState.errors.customerName.message}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -429,9 +454,17 @@ export default function AddJobPage() {
                       <FormItem>
                         <FormLabel className="text-sm font-semibold text-slate-700">Phone Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 555-0123" {...field} className="h-11" />
+                          <Input 
+                            placeholder="+1 555-0123" 
+                            {...field} 
+                            className={`h-11 ${form.formState.errors.phoneNumber ? "border-red-500 ring-1 ring-red-500 bg-red-50" : ""}`} 
+                          />
                         </FormControl>
-                        <FormMessage />
+                        {form.formState.errors.phoneNumber && (
+                          <p className="text-xs font-bold text-red-600 mt-1">
+                            {form.formState.errors.phoneNumber.message}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -450,33 +483,37 @@ export default function AddJobPage() {
                     )}
                   />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="referralSource"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-semibold text-slate-700">How did you hear about us?</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            value={field.value || ""}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Select referral source" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Google Search">Google Search</SelectItem>
-                              <SelectItem value="Social Media">Social Media</SelectItem>
-                              <SelectItem value="Friend/Family">Friend/Family</SelectItem>
-                              <SelectItem value="Advertisement">Advertisement</SelectItem>
-                              <SelectItem value="Walk-in">Walk-in</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name="referralSource"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">How did you hear about us? *</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger className={`h-11 ${form.formState.errors.referralSource ? "border-red-500 ring-1 ring-red-500 bg-red-50" : ""}`}>
+                              <SelectValue placeholder="Select referral source" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Google Search">Google Search</SelectItem>
+                            <SelectItem value="Social Media">Social Media</SelectItem>
+                            <SelectItem value="Friend/Family">Friend/Family</SelectItem>
+                            <SelectItem value="Advertisement">Advertisement</SelectItem>
+                            <SelectItem value="Walk-in">Walk-in</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.referralSource && (
+                          <p className="text-xs font-bold text-red-600 mt-1">
+                            {form.formState.errors.referralSource.message}
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
                     {form.watch("referralSource") === "Friend/Family" && (
                       <div className="contents">
                         <FormField
@@ -532,27 +569,74 @@ export default function AddJobPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <FormField
                     control={form.control}
-                    name="make"
+                    name="vehicleType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-semibold text-slate-700">Make *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Toyota" {...field} className="h-11" />
-                        </FormControl>
-                        <FormMessage />
+                        <FormLabel className="text-sm font-semibold text-slate-700">Vehicle Type *</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger className={`h-11 ${form.formState.errors.vehicleType ? "border-red-500 ring-1 ring-red-500 bg-red-50" : ""}`}>
+                              <SelectValue placeholder="Select vehicle type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vehicleTypes.map((type: any) => (
+                              <SelectItem key={type.id} value={type.name}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.vehicleType && (
+                          <p className="text-xs font-bold text-red-600 mt-1">
+                            {form.formState.errors.vehicleType.message}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="model"
+                    name="year"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-semibold text-slate-700">Model *</FormLabel>
+                        <FormLabel className="text-sm font-semibold text-slate-700">Year *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Camry" {...field} className="h-11" />
+                          <Input 
+                            placeholder="2024" 
+                            {...field} 
+                            className={`h-11 ${form.formState.errors.year ? "border-red-500 ring-1 ring-red-500 bg-red-50" : ""}`} 
+                          />
                         </FormControl>
-                        <FormMessage />
+                        {form.formState.errors.year && (
+                          <p className="text-xs font-bold text-red-600 mt-1">
+                            {form.formState.errors.year.message}
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="licensePlate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-slate-700">License Plate *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="ABC-1234" 
+                            {...field} 
+                            className={`h-11 ${form.formState.errors.licensePlate ? "border-red-500 ring-1 ring-red-500 bg-red-50" : ""}`} 
+                          />
+                        </FormControl>
+                        {form.formState.errors.licensePlate && (
+                          <p className="text-xs font-bold text-red-600 mt-1">
+                            {form.formState.errors.licensePlate.message}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
