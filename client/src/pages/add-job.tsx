@@ -81,6 +81,8 @@ export default function AddJobPage() {
       return data;
     },
     enabled: !!jobId,
+    staleTime: 0, // Ensure we always get fresh data when switching jobs
+    gcTime: 0,    // Clear from cache immediately when not used
   });
 
   const form = useForm<JobCardFormValues>({
@@ -107,20 +109,21 @@ export default function AddJobPage() {
     },
   });
 
+  // Handle initial form reset and subsequent Job ID changes
   useEffect(() => {
-    if (jobToEdit) {
-      console.log("Resetting form with jobToEdit data:", jobToEdit);
+    if (jobId && jobToEdit) {
+      console.log("Resetting form with jobToEdit data for jobId:", jobId);
       form.reset({
-        customerName: jobToEdit.customerName,
-        phoneNumber: jobToEdit.phoneNumber,
+        customerName: jobToEdit.customerName || "",
+        phoneNumber: jobToEdit.phoneNumber || "",
         emailAddress: jobToEdit.emailAddress || "",
         referralSource: jobToEdit.referralSource || "",
         referrerName: jobToEdit.referrerName || "",
         referrerPhone: jobToEdit.referrerPhone || "",
-        make: jobToEdit.make,
-        model: jobToEdit.model,
-        year: jobToEdit.year,
-        licensePlate: jobToEdit.licensePlate,
+        make: jobToEdit.make || "",
+        model: jobToEdit.model || "",
+        year: jobToEdit.year || "",
+        licensePlate: jobToEdit.licensePlate || "",
         vehicleType: jobToEdit.vehicleType || "",
         services: (jobToEdit.services || []).map(s => ({
           serviceId: (s as any).serviceId || (s as any).id,
@@ -142,13 +145,13 @@ export default function AddJobPage() {
           price: a.price,
           quantity: a.quantity
         })),
-        laborCharge: jobToEdit.laborCharge,
-        discount: jobToEdit.discount,
-        gst: jobToEdit.gst,
+        laborCharge: jobToEdit.laborCharge || 0,
+        discount: jobToEdit.discount || 0,
+        gst: jobToEdit.gst || 18,
         serviceNotes: jobToEdit.serviceNotes || "",
       });
     } else if (!jobId) {
-      // Clear form when adding a new job
+      console.log("No jobId - Clearing form for new job card");
       form.reset({
         customerName: "",
         phoneNumber: "",
@@ -170,7 +173,7 @@ export default function AddJobPage() {
         serviceNotes: "",
       });
     }
-  }, [jobToEdit, jobId, form]);
+  }, [jobToEdit, jobId, form.reset]);
 
   const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
     control: form.control,
