@@ -221,21 +221,6 @@ export default function JobDetailsPage() {
                           {service.name.split(" - Tech:")[0]}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
-                        <p className="text-base font-semibold text-slate-800">
-                          {(() => {
-                            if (service.technician) return service.technician;
-                            if (job.technician) return job.technician;
-                            
-                            // Fallback: Parse from service name "Service Name - Tech: Technician Name"
-                            const techMatch = service.name.match(/- Tech:\s*(.+)$/i);
-                            if (techMatch) return techMatch[1].trim();
-                            
-                            return "Unassigned";
-                          })()}
-                        </p>
-                      </div>
                     </div>
                   ))}
                   {job.ppfs.map((ppf, idx) => (
@@ -244,21 +229,6 @@ export default function JobDetailsPage() {
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">PPF Service</p>
                         <p className="text-base font-semibold text-slate-800">
                           {ppf.name.split(" - Tech:")[0]}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Technician</p>
-                        <p className="text-base font-semibold text-slate-800">
-                          {(() => {
-                            if (ppf.technician) return ppf.technician;
-                            if (job.technician) return job.technician;
-                            
-                            // Fallback: Parse from service name "Service Name - Tech: Technician Name"
-                            const techMatch = ppf.name.match(/- Tech:\s*(.+)$/i);
-                            if (techMatch) return techMatch[1].trim();
-                            
-                            return "Unassigned";
-                          })()}
                         </p>
                       </div>
                     </div>
@@ -299,6 +269,21 @@ export default function JobDetailsPage() {
                   <div className="flex justify-between items-center text-sm font-medium text-slate-500">
                     <span>Estimated Cost</span>
                     <span className="text-lg font-black text-slate-900">₹{job.estimatedCost.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-medium text-slate-500 pt-2 border-t border-slate-100">
+                    <span>Assigned Technician</span>
+                    <span className="text-base font-bold text-red-600">
+                      {(() => {
+                        if (job.technician) return job.technician;
+                        if (job.services?.[0]?.technician) return job.services[0].technician;
+                        
+                        // Fallback: Parse from service name "Service Name - Tech: Technician Name"
+                        const techMatch = (job.services?.[0]?.name || "").match(/- Tech:\s*(.+)$/i);
+                        if (techMatch) return techMatch[1].trim();
+                        
+                        return "Unassigned";
+                      })()}
+                    </span>
                   </div>
                 </div>
               </CardContent>
