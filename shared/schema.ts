@@ -241,3 +241,37 @@ export const inquirySchema = z.object({
 export type Inquiry = z.infer<typeof inquirySchema>;
 export const insertInquirySchema = inquirySchema.omit({ id: true, inquiryId: true, status: true, createdAt: true });
 export type InsertInquiry = z.infer<typeof insertInquirySchema>;
+
+// Invoice Schemas
+export const businessTypeSchema = z.enum(["Auto Gamma", "AGNX"]);
+export type BusinessType = z.infer<typeof businessTypeSchema>;
+
+export const invoiceItemSchema = z.object({
+  id: z.string(),
+  type: z.enum(["service", "ppf", "accessory", "labor"]),
+  name: z.string(),
+  price: z.number(),
+  quantity: z.number().optional(),
+});
+
+export const invoiceSchema = z.object({
+  id: z.string().optional(),
+  invoiceNo: z.string(),
+  jobCardId: z.string(),
+  jobNo: z.string(),
+  business: businessTypeSchema,
+  customerName: z.string(),
+  phoneNumber: z.string(),
+  vehicleInfo: z.string(),
+  items: z.array(invoiceItemSchema),
+  subtotal: z.number(),
+  gst: z.number(),
+  gstAmount: z.number(),
+  total: z.number(),
+  createdAt: z.string().default(() => new Date().toISOString()),
+});
+
+export type InvoiceItem = z.infer<typeof invoiceItemSchema>;
+export type Invoice = z.infer<typeof invoiceSchema>;
+export const insertInvoiceSchema = invoiceSchema.omit({ id: true, invoiceNo: true, createdAt: true });
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
