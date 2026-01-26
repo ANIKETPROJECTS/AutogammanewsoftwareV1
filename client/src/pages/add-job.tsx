@@ -994,7 +994,16 @@ export default function AddJobPage() {
               <Button type="button" variant="outline" onClick={() => setLocation("/job-cards")} className="h-12 px-8">
                 Cancel
               </Button>
-              <Button type="submit" className="h-12 px-8 bg-red-600 hover:bg-red-700 font-bold" disabled={createJobMutation.isPending}>
+              <Button 
+                type="button"
+                className="h-12 px-8 bg-red-600 hover:bg-red-700 font-bold" 
+                disabled={createJobMutation.isPending}
+                onClick={async () => {
+                  console.log("Update button clicked manually");
+                  const data = form.getValues();
+                  await onSubmit(data);
+                }}
+              >
                 {createJobMutation.isPending ? "Saving..." : (jobId ? "Update Job Card" : "Create Job Card")}
               </Button>
             </div>
