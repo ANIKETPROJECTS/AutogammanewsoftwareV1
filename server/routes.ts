@@ -342,6 +342,32 @@ export async function registerRoutes(
     res.json({ message: "Inquiry deleted" });
   });
 
+  // Invoice Routes
+  app.get("/api/invoices", async (req, res) => {
+    const invoices = await storage.getInvoices();
+    res.json(invoices);
+  });
+
+  app.get("/api/invoices/job/:jobCardId", async (req, res) => {
+    const invoices = await storage.getInvoicesByJobCard(req.params.jobCardId);
+    res.json(invoices);
+  });
+
+  app.post("/api/invoices", async (req, res) => {
+    try {
+      const invoice = await storage.createInvoice(req.body);
+      res.status(201).json(invoice);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/invoices/:id", async (req, res) => {
+    const success = await storage.deleteInvoice(req.params.id);
+    if (!success) return res.status(404).json({ message: "Invoice not found" });
+    res.json({ message: "Invoice deleted" });
+  });
+
   // Seed default user if not exists
   if (mongoose.connection.readyState === 1) {
     const defaultEmail = "Autogarage@system.com";
