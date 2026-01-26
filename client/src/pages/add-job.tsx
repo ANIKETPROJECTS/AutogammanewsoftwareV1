@@ -109,6 +109,7 @@ export default function AddJobPage() {
 
   useEffect(() => {
     if (jobToEdit) {
+      console.log("Resetting form with jobToEdit data:", jobToEdit);
       form.reset({
         customerName: jobToEdit.customerName,
         phoneNumber: jobToEdit.phoneNumber,
@@ -146,8 +147,30 @@ export default function AddJobPage() {
         gst: jobToEdit.gst,
         serviceNotes: jobToEdit.serviceNotes || "",
       });
+    } else if (!jobId) {
+      // Clear form when adding a new job
+      form.reset({
+        customerName: "",
+        phoneNumber: "",
+        emailAddress: "",
+        referralSource: "",
+        referrerName: "",
+        referrerPhone: "",
+        make: "",
+        model: "",
+        year: "",
+        licensePlate: "",
+        vehicleType: "",
+        services: [],
+        ppfs: [],
+        accessories: [],
+        laborCharge: 0,
+        discount: 0,
+        gst: 18,
+        serviceNotes: "",
+      });
     }
-  }, [jobToEdit, form]);
+  }, [jobToEdit, jobId, form]);
 
   const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
     control: form.control,
