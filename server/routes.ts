@@ -304,9 +304,15 @@ export async function registerRoutes(
   });
 
   app.patch("/api/job-cards/:id", async (req, res) => {
-    const job = await storage.updateJobCard(req.params.id, req.body);
-    if (!job) return res.status(404).json({ message: "Job card not found" });
-    res.json(job);
+    try {
+      console.log("Updating job card:", req.params.id, req.body);
+      const job = await storage.updateJobCard(req.params.id, req.body);
+      if (!job) return res.status(404).json({ message: "Job card not found" });
+      res.json(job);
+    } catch (error: any) {
+      console.error("Error updating job card:", error);
+      res.status(400).json({ message: error.message || "Invalid input" });
+    }
   });
 
   app.delete("/api/job-cards/:id", async (req, res) => {

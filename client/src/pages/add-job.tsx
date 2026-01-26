@@ -274,7 +274,8 @@ export default function AddJobPage() {
       const res = await apiRequest(method, url, payload);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Mutation successful", data);
       queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/job-cards", jobId] });
       queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
@@ -284,7 +285,8 @@ export default function AddJobPage() {
       });
       setLocation("/job-cards");
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      console.error("Mutation error", error);
       toast({
         title: "Error",
         description: error.message || `Failed to ${jobId ? "update" : "create"} job card`,
@@ -294,50 +296,17 @@ export default function AddJobPage() {
   });
 
   const onSubmit = (data: JobCardFormValues) => {
-    const serviceData = data.services.map(field => {
-      const s = services.find(m => m.id === field.serviceId);
-      const vehiclePrice = s?.pricingByVehicleType?.find(v => v.vehicleType === data.vehicleType);
-      return {
-        serviceId: field.serviceId,
-        name: field.name,
-        price: vehiclePrice?.price || field.price,
-        technician: field.technician
-      };
-    });
-
-    const ppfData = data.ppfs.map(field => {
-      const p = ppfMasters.find(m => m.id === field.ppfId);
-      const vehiclePrice = p?.pricingByVehicleType?.find(v => v.vehicleType === data.vehicleType);
-      const option = vehiclePrice?.options.find(o => o.warrantyName === field.warranty);
-      return {
-        ppfId: field.ppfId,
-        name: field.name,
-        price: option?.price || field.price,
-        technician: field.technician,
-        rollUsed: field.rollUsed
-      };
-    });
-
-    const accessoryData = data.accessories.map(field => {
-      const a = accessories.find(m => m.id === field.accessoryId);
-      return {
-        accessoryId: field.accessoryId,
-        name: a?.name || "",
-        price: (a?.price || 0) * (field.quantity || 1),
-        quantity: field.quantity || 1
-      };
-    });
-
-    const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + curr.price, 0) + (data.laborCharge || 0);
+    console.log("Form submitted", data);
+    const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + (curr.price || 0), 0) + (data.laborCharge || 0);
     const afterDiscount = subtotal - (data.discount || 0);
     const tax = afterDiscount * ((data.gst || 18) / 100);
     const totalCost = Math.round(afterDiscount + tax);
 
     createJobMutation.mutate({
       ...data,
-      services: serviceData,
-      ppfs: ppfData,
-      accessories: accessoryData,
+      services: data.services,
+      ppfs: data.ppfs,
+      accessories: data.accessories,
     });
   };
 
