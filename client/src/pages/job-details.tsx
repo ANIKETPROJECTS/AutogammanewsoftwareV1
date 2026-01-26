@@ -231,6 +231,12 @@ export default function JobDetailsPage() {
                           {ppf.name.split(" - Tech:")[0]}
                         </p>
                       </div>
+                      {ppf.rollUsed && (
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SQFT Used</p>
+                          <p className="text-base font-semibold text-slate-800">{ppf.rollUsed} SQFT</p>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {job.accessories.map((accessory, idx) => (
