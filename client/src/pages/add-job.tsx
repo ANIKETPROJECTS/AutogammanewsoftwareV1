@@ -133,22 +133,22 @@ export default function AddJobPage() {
         year: jobToEdit.year,
         licensePlate: jobToEdit.licensePlate,
         vehicleType: jobToEdit.vehicleType || "",
-        services: jobToEdit.services.map(s => ({
-          serviceId: s.id,
+        services: (jobToEdit.services || []).map(s => ({
+          serviceId: (s as any).serviceId || (s as any).id,
           name: s.name,
           price: s.price,
           technician: s.technician
         })),
-        ppfs: jobToEdit.ppfs.map(p => ({
-          ppfId: p.id,
+        ppfs: (jobToEdit.ppfs || []).map(p => ({
+          ppfId: (p as any).ppfId || (p as any).id,
           name: p.name,
           price: p.price,
           technician: p.technician,
           rollUsed: p.rollUsed,
-          warranty: p.name.match(/\((.*)\)/)?.[1]?.split(" - ")?.[1] || ""
+          warranty: (p as any).warranty || p.name.match(/\((.*)\)/)?.[1]?.split(" - ")?.[1] || ""
         })),
-        accessories: jobToEdit.accessories.map(a => ({
-          accessoryId: a.id,
+        accessories: (jobToEdit.accessories || []).map(a => ({
+          accessoryId: (a as any).accessoryId || (a as any).id,
           name: a.name,
           price: a.price,
           quantity: a.quantity
