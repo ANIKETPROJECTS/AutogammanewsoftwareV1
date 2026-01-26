@@ -323,6 +323,12 @@ export default function AddJobPage() {
     const errors = form.formState.errors;
     if (Object.keys(errors).length > 0) {
       console.warn("Form validation errors:", errors);
+      toast({
+        title: "Validation Error",
+        description: "Please check the form for errors.",
+        variant: "destructive",
+      });
+      return;
     }
 
     const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + (curr.price || 0), 0) + (data.laborCharge || 0);
@@ -341,6 +347,10 @@ export default function AddJobPage() {
       laborCharge: Number(data.laborCharge),
       discount: Number(data.discount),
       gst: Number(data.gst),
+    }, {
+      onError: (error) => {
+        console.error("Manual mutation error catch:", error);
+      }
     });
   };
 
