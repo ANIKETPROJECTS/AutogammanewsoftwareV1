@@ -261,6 +261,11 @@ export default function AddJobPage() {
       };
     });
 
+    const subtotal = [...data.services, ...data.ppfs, ...data.accessories].reduce((acc, curr) => acc + curr.price, 0) + (data.laborCharge || 0);
+    const afterDiscount = subtotal - (data.discount || 0);
+    const tax = afterDiscount * ((data.gst || 18) / 100);
+    const totalCost = Math.round(afterDiscount + tax);
+
     createJobMutation.mutate({
       ...data,
       services: serviceData,
