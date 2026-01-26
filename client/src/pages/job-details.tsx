@@ -133,7 +133,11 @@ export default function JobDetailsPage() {
             </div>
           </div>
             <div className="flex items-center gap-3">
-              <Button variant="destructive" className="font-bold flex items-center gap-2">
+              <Button 
+                variant="destructive" 
+                className="font-bold flex items-center gap-2"
+                onClick={() => setLocation(`/add-job?id=${id}`)}
+              >
                 <Edit className="h-4 w-4" /> Edit Job Card
               </Button>
               <Button 

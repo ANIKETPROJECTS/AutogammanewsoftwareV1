@@ -20,13 +20,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ServiceMaster, PPFMaster, AccessoryMaster } from "@shared/schema";
+import { ServiceMaster, PPFMaster, AccessoryMaster, JobCard } from "@shared/schema";
 import { api } from "@shared/routes";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   ChevronLeft, 
   User, 
@@ -78,6 +78,19 @@ type JobCardFormValues = z.infer<typeof jobCardSchema>;
 
 export default function AddJobPage() {
   const [, setLocation] = useLocation();
+  const searchParams = new URLSearchParams(useSearch());
+  const jobId = searchParams.get("id");
+
+  const { data: jobToEdit, isLoading: isLoadingJob } = useQuery<JobCard>({
+    queryKey: ["/api/job-cards", jobId],
+    queryFn: async () => {
+      const res = await fetch(`/api/job-cards/${jobId}`);
+      if (!res.ok) throw new Error("Failed to fetch job");
+      return res.json();
+    },
+    enabled: !!jobId,
+  });
+
   const form = useForm<JobCardFormValues>({
     resolver: zodResolver(jobCardSchema),
     defaultValues: {
@@ -101,6 +114,48 @@ export default function AddJobPage() {
       serviceNotes: "",
     },
   });
+
+  useEffect(() => {
+    if (jobToEdit) {
+      form.reset({
+        customerName: jobToEdit.customerName,
+        phoneNumber: jobToEdit.phoneNumber,
+        emailAddress: jobToEdit.emailAddress || "",
+        referralSource: jobToEdit.referralSource,
+        referrerName: jobToEdit.referrerName || "",
+        referrerPhone: jobToEdit.referrerPhone || "",
+        make: jobToEdit.make,
+        model: jobToEdit.model,
+        year: jobToEdit.year,
+        licensePlate: jobToEdit.licensePlate,
+        vehicleType: jobToEdit.vehicleType || "",
+        services: jobToEdit.services.map(s => ({
+          serviceId: s.id,
+          name: s.name,
+          price: s.price,
+          technician: s.technician
+        })),
+        ppfs: jobToEdit.ppfs.map(p => ({
+          ppfId: p.id,
+          name: p.name,
+          price: p.price,
+          technician: p.technician,
+          rollUsed: p.rollUsed,
+          warranty: p.name.match(/\((.*)\)/)?.[1]?.split(" - ")?.[1] || ""
+        })),
+        accessories: jobToEdit.accessories.map(a => ({
+          accessoryId: a.id,
+          name: a.name,
+          price: a.price,
+          quantity: a.quantity
+        })),
+        laborCharge: jobToEdit.laborCharge,
+        discount: jobToEdit.discount,
+        gst: jobToEdit.gst,
+        serviceNotes: jobToEdit.serviceNotes || "",
+      });
+    }
+  }, [jobToEdit, form]);
 
   const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
     control: form.control,
@@ -203,26 +258,31 @@ export default function AddJobPage() {
       const payload = {
         ...values,
         estimatedCost,
-        status: "Pending",
+        status: jobToEdit?.status || "Pending",
         technician
       };
       
-      const res = await apiRequest("POST", "/api/job-cards", payload);
+      const method = jobId ? "PATCH" : "POST";
+      const url = jobId ? `/api/job-cards/${jobId}` : "/api/job-cards";
+      const res = await apiRequest(method, url, payload);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
+      if (jobId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/job-cards", jobId] });
+      }
       queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
       toast({
         title: "Success",
-        description: "Job card created successfully",
+        description: `Job card ${jobId ? "updated" : "created"} successfully`,
       });
       setLocation("/job-cards");
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create job card",
+        description: error.message || `Failed to ${jobId ? "update" : "create"} job card`,
         variant: "destructive",
       });
     }
@@ -298,9 +358,9 @@ export default function AddJobPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Create New Job Card</h1>
+            <h1 className="text-2xl font-bold text-foreground">{jobId ? "Edit Job Card" : "Create New Job Card"}</h1>
             <p className="text-sm text-muted-foreground">
-              Fill in the details below to create a new service job card
+              {jobId ? `Updating details for job card ${jobToEdit?.jobNo || ""}` : "Fill in the details below to create a new service job card"}
             </p>
           </div>
         </div>
@@ -899,8 +959,8 @@ export default function AddJobPage() {
               <Button type="button" variant="outline" onClick={() => setLocation("/job-cards")} className="h-12 px-8">
                 Cancel
               </Button>
-              <Button type="submit" className="h-12 px-8 bg-red-600 hover:bg-red-700 font-bold">
-                Create Job Card
+              <Button type="submit" className="h-12 px-8 bg-red-600 hover:bg-red-700 font-bold" disabled={createJobMutation.isPending}>
+                {createJobMutation.isPending ? "Saving..." : (jobId ? "Update Job Card" : "Create Job Card")}
               </Button>
             </div>
           </form>

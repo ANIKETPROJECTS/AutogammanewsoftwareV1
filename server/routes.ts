@@ -292,6 +292,12 @@ export async function registerRoutes(
     res.json(jobs);
   });
 
+  app.get("/api/job-cards/:id", async (req, res) => {
+    const job = await storage.getJobCard(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job card not found" });
+    res.json(job);
+  });
+
   app.post("/api/job-cards", async (req, res) => {
     const job = await storage.createJobCard(req.body);
     res.json(job);

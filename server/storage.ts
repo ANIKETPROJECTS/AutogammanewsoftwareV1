@@ -550,6 +550,19 @@ export class MongoStorage implements IStorage {
   }
 
   // Job Cards
+  async getJobCard(id: string): Promise<JobCard | undefined> {
+    const j = await JobCardModel.findById(id);
+    if (!j) return undefined;
+    return {
+      ...j.toObject(),
+      id: j._id.toString(),
+      services: j.services || [],
+      ppfs: j.ppfs || [],
+      accessories: j.accessories || [],
+      vehicleType: (j as any).vehicleType
+    } as JobCard;
+  }
+
   async getJobCards(): Promise<JobCard[]> {
     const jobs = await JobCardModel.find().sort({ date: -1 });
     return jobs.map(j => ({
