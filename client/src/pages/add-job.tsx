@@ -70,6 +70,30 @@ export default function AddJobPage() {
   const searchParams = new URLSearchParams(useSearch());
   const jobId = searchParams.get("id");
 
+  const form = useForm<JobCardFormValues>({
+    resolver: zodResolver(jobCardSchema),
+    defaultValues: {
+      customerName: "",
+      phoneNumber: "",
+      emailAddress: "",
+      referralSource: "",
+      referrerName: "",
+      referrerPhone: "",
+      make: "",
+      model: "",
+      year: "",
+      licensePlate: "",
+      vehicleType: "",
+      services: [],
+      ppfs: [],
+      accessories: [],
+      laborCharge: 0,
+      discount: 0,
+      gst: 18,
+      serviceNotes: "",
+    },
+  });
+
   const { data: jobToEdit, isLoading: isLoadingJob, refetch: refetchJob } = useQuery<JobCard>({
     queryKey: ["/api/job-cards", jobId],
     queryFn: async () => {
