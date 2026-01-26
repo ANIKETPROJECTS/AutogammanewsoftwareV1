@@ -56,12 +56,15 @@ const jobCardSchema = z.object({
     serviceId: z.string(),
     name: z.string(),
     price: z.number(),
+    technician: z.string().optional(),
   })),
   ppfs: z.array(z.object({
     ppfId: z.string(),
     name: z.string(),
     rollUsed: z.number().optional(),
     price: z.number(),
+    technician: z.string().optional(),
+    warranty: z.string().optional(),
   })),
   accessories: z.array(z.object({
     accessoryId: z.string(),
@@ -217,6 +220,7 @@ export default function AddJobPage() {
 
   const handleAddPPF = () => {
     const p = ppfMasters.find(item => item.id === selectedPPF);
+    const tech = technicians.find(t => t.id === selectedTechnician);
     const vehicleType = form.getValues("vehicleType");
     const vehiclePricing = p?.pricingByVehicleType.find(v => v.vehicleType === vehicleType);
     const option = vehiclePricing?.options.find(o => o.warrantyName === selectedWarranty);
@@ -227,11 +231,13 @@ export default function AddJobPage() {
         name: `${p.name} (${vehicleType} - ${selectedWarranty})`,
         rollUsed: rollQty > 0 ? rollQty : undefined,
         price: option?.price || 0,
-        technician: tech?.name
+        technician: tech?.name,
+        warranty: selectedWarranty
       } as any);
       setSelectedPPF("");
       setSelectedWarranty("");
       setRollQty(0);
+      setSelectedTechnician("");
     }
   };
 
