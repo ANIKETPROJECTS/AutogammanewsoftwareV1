@@ -70,6 +70,7 @@ const jobCardSchema = z.object({
     accessoryId: z.string(),
     name: z.string(),
     price: z.number(),
+    quantity: z.number().optional().default(1),
   })),
   laborCharge: z.number().default(0),
   discount: z.number().default(0),
@@ -124,7 +125,7 @@ export default function AddJobPage() {
         customerName: jobToEdit.customerName,
         phoneNumber: jobToEdit.phoneNumber,
         emailAddress: jobToEdit.emailAddress || "",
-        referralSource: jobToEdit.referralSource,
+        referralSource: jobToEdit.referralSource || "",
         referrerName: jobToEdit.referrerName || "",
         referrerPhone: jobToEdit.referrerPhone || "",
         make: jobToEdit.make,
@@ -299,7 +300,7 @@ export default function AddJobPage() {
       const s = services.find(m => m.id === field.serviceId);
       const vehiclePrice = s?.pricingByVehicleType?.find(v => v.vehicleType === data.vehicleType);
       return {
-        id: field.serviceId,
+        serviceId: field.serviceId,
         name: field.name,
         price: vehiclePrice?.price || field.price,
         technician: field.technician
@@ -311,7 +312,7 @@ export default function AddJobPage() {
       const vehiclePrice = p?.pricingByVehicleType?.find(v => v.vehicleType === data.vehicleType);
       const option = vehiclePrice?.options.find(o => o.warrantyName === field.warranty);
       return {
-        id: field.ppfId,
+        ppfId: field.ppfId,
         name: field.name,
         price: option?.price || field.price,
         technician: field.technician,
@@ -322,7 +323,7 @@ export default function AddJobPage() {
     const accessoryData = data.accessories.map(field => {
       const a = accessories.find(m => m.id === field.accessoryId);
       return {
-        id: field.accessoryId,
+        accessoryId: field.accessoryId,
         name: a?.name || "",
         price: (a?.price || 0) * (field.quantity || 1),
         quantity: field.quantity || 1
@@ -339,7 +340,6 @@ export default function AddJobPage() {
       services: serviceData,
       ppfs: ppfData,
       accessories: accessoryData,
-      estimatedCost: totalCost
     });
   };
 
@@ -430,7 +430,10 @@ export default function AddJobPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-semibold text-slate-700">How did you hear about us?</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value || ""}
+                          >
                             <FormControl>
                               <SelectTrigger className="h-11">
                                 <SelectValue placeholder="Select referral source" />
