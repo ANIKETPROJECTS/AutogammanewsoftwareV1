@@ -264,7 +264,24 @@ export default function AddJobPage() {
       const technician = values.services[0]?.technician;
 
       const payload = {
-        ...values,
+        customerName: values.customerName,
+        phoneNumber: values.phoneNumber,
+        emailAddress: values.emailAddress,
+        referralSource: values.referralSource,
+        referrerName: values.referrerName,
+        referrerPhone: values.referrerPhone,
+        make: values.make,
+        model: values.model,
+        year: values.year,
+        licensePlate: values.licensePlate,
+        vehicleType: values.vehicleType,
+        services: values.services,
+        ppfs: values.ppfs,
+        accessories: values.accessories,
+        laborCharge: values.laborCharge,
+        discount: values.discount,
+        gst: values.gst,
+        serviceNotes: values.serviceNotes,
         estimatedCost,
         status: jobToEdit?.status || "Pending",
         technician
@@ -318,9 +335,12 @@ export default function AddJobPage() {
 
     createJobMutation.mutate({
       ...data,
-      services: data.services,
-      ppfs: data.ppfs,
-      accessories: data.accessories,
+      services: data.services.map(s => ({ ...s, price: Number(s.price) })),
+      ppfs: data.ppfs.map(p => ({ ...p, price: Number(p.price) })),
+      accessories: data.accessories.map(a => ({ ...a, price: Number(a.price) })),
+      laborCharge: Number(data.laborCharge),
+      discount: Number(data.discount),
+      gst: Number(data.gst),
     });
   };
 
