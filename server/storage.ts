@@ -18,7 +18,9 @@ import {
   JobCard,
   InsertJobCard,
   Inquiry,
-  InsertInquiry
+  InsertInquiry,
+  Invoice,
+  InsertInvoice
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -161,6 +163,30 @@ const jobCardMongoSchema = new mongoose.Schema({
 
 export const JobCardModel = mongoose.model("JobCard", jobCardMongoSchema);
 
+const invoiceMongoSchema = new mongoose.Schema({
+  invoiceNo: { type: String, required: true, unique: true },
+  jobCardId: { type: String, required: true },
+  jobNo: { type: String, required: true },
+  business: { type: String, enum: ["Auto Gamma", "AGNX"], required: true },
+  customerName: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  vehicleInfo: { type: String, required: true },
+  items: [{
+    id: String,
+    type: { type: String, enum: ["service", "ppf", "accessory", "labor"] },
+    name: String,
+    price: Number,
+    quantity: Number
+  }],
+  subtotal: { type: Number, required: true },
+  gst: { type: Number, required: true },
+  gstAmount: { type: Number, required: true },
+  total: { type: Number, required: true },
+  createdAt: { type: String, required: true }
+});
+
+export const InvoiceModel = mongoose.model("Invoice", invoiceMongoSchema);
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -211,6 +237,12 @@ export interface IStorage {
   getInquiries(): Promise<Inquiry[]>;
   createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
   deleteInquiry(id: string): Promise<boolean>;
+
+  // Invoices
+  getInvoices(): Promise<Invoice[]>;
+  getInvoicesByJobCard(jobCardId: string): Promise<Invoice[]>;
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  deleteInvoice(id: string): Promise<boolean>;
 
   sessionStore: session.Store;
 }
@@ -679,6 +711,79 @@ export class MongoStorage implements IStorage {
 
   async deleteInquiry(id: string): Promise<boolean> {
     const result = await InquiryModel.findByIdAndDelete(id);
+    return !!result;
+  }
+
+  // Invoice methods
+  async getInvoices(): Promise<Invoice[]> {
+    const invoices = await InvoiceModel.find().sort({ createdAt: -1 });
+    return invoices.map(i => ({
+      id: i._id.toString(),
+      invoiceNo: i.invoiceNo,
+      jobCardId: i.jobCardId,
+      jobNo: i.jobNo,
+      business: i.business as any,
+      customerName: i.customerName,
+      phoneNumber: i.phoneNumber,
+      vehicleInfo: i.vehicleInfo,
+      items: i.items as any,
+      subtotal: i.subtotal,
+      gst: i.gst,
+      gstAmount: i.gstAmount,
+      total: i.total,
+      createdAt: i.createdAt
+    })) as Invoice[];
+  }
+
+  async getInvoicesByJobCard(jobCardId: string): Promise<Invoice[]> {
+    const invoices = await InvoiceModel.find({ jobCardId }).sort({ createdAt: -1 });
+    return invoices.map(i => ({
+      id: i._id.toString(),
+      invoiceNo: i.invoiceNo,
+      jobCardId: i.jobCardId,
+      jobNo: i.jobNo,
+      business: i.business as any,
+      customerName: i.customerName,
+      phoneNumber: i.phoneNumber,
+      vehicleInfo: i.vehicleInfo,
+      items: i.items as any,
+      subtotal: i.subtotal,
+      gst: i.gst,
+      gstAmount: i.gstAmount,
+      total: i.total,
+      createdAt: i.createdAt
+    })) as Invoice[];
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const count = await InvoiceModel.countDocuments();
+    const invoiceNo = `INV-${String(count + 1).padStart(4, '0')}`;
+    const i = new InvoiceModel({
+      ...invoice,
+      invoiceNo,
+      createdAt: new Date().toISOString()
+    });
+    await i.save();
+    return {
+      id: i._id.toString(),
+      invoiceNo: i.invoiceNo,
+      jobCardId: i.jobCardId,
+      jobNo: i.jobNo,
+      business: i.business as any,
+      customerName: i.customerName,
+      phoneNumber: i.phoneNumber,
+      vehicleInfo: i.vehicleInfo,
+      items: i.items as any,
+      subtotal: i.subtotal,
+      gst: i.gst,
+      gstAmount: i.gstAmount,
+      total: i.total,
+      createdAt: i.createdAt
+    };
+  }
+
+  async deleteInvoice(id: string): Promise<boolean> {
+    const result = await InvoiceModel.findByIdAndDelete(id);
     return !!result;
   }
 }
