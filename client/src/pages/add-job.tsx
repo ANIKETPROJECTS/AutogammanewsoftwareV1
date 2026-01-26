@@ -17,6 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,7 +32,7 @@ import { useLocation, useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ServiceMaster, PPFMaster, AccessoryMaster, JobCard } from "@shared/schema";
+import { ServiceMaster, PPFMaster, AccessoryMaster, JobCard, BusinessType } from "@shared/schema";
 import { api } from "@shared/routes";
 import { useState, useEffect } from "react";
 import { 
@@ -35,7 +43,8 @@ import {
   Shield, 
   Package, 
   FileText, 
-  Trash2 
+  Trash2,
+  X
 } from "lucide-react";
 
   const jobCardSchema = z.object({
@@ -225,6 +234,11 @@ export default function AddJobPage() {
   const [rollQty, setRollQty] = useState(0);
   const [selectedAccessoryCategory, setSelectedAccessoryCategory] = useState("");
   const [selectedAccessory, setSelectedAccessory] = useState("");
+  
+  // Business assignment modal state
+  const [showBusinessModal, setShowBusinessModal] = useState(false);
+  const [businessAssignments, setBusinessAssignments] = useState<Record<string, BusinessType>>({});
+  const [pendingFormData, setPendingFormData] = useState<any>(null);
 
   const handleAddService = () => {
     const s = services.find(item => item.id === selectedService);
@@ -316,7 +330,7 @@ export default function AddJobPage() {
   const { toast } = useToast();
 
   const createJobMutation = useMutation({
-    mutationFn: async (values: JobCardFormValues) => {
+    mutationFn: async (values: JobCardFormValues & { businessAssignments?: Record<string, BusinessType> }) => {
       console.log("Mutation starting - Payload:", values);
       const subtotal = [...values.services, ...values.ppfs, ...values.accessories].reduce((acc, curr) => acc + curr.price, 0) + values.laborCharge;
       const afterDiscount = subtotal - values.discount;
@@ -356,6 +370,91 @@ export default function AddJobPage() {
       const res = await apiRequest(method, url, payload);
       const result = await res.json();
       console.log("API Response:", result);
+      
+      // Create invoices based on business assignments (only for new jobs)
+      if (!jobId && values.businessAssignments) {
+        const assignments = values.businessAssignments;
+        const vehicleInfo = `${values.make} ${values.model} (${values.year}) - ${values.licensePlate}`;
+        
+        // Group items by business
+        const businessItems: Record<BusinessType, { id: string; type: "service" | "ppf" | "accessory" | "labor"; name: string; price: number }[]> = {
+          "Auto Gamma": [],
+          "AGNX": []
+        };
+        
+        // Group services
+        values.services.forEach((s: any, idx: number) => {
+          const business = assignments[`service-${idx}`] || "Auto Gamma";
+          businessItems[business].push({
+            id: s.id || `service-${idx}`,
+            type: "service",
+            name: s.name,
+            price: Number(s.price)
+          });
+        });
+        
+        // Group PPFs
+        values.ppfs.forEach((p: any, idx: number) => {
+          const business = assignments[`ppf-${idx}`] || "Auto Gamma";
+          businessItems[business].push({
+            id: p.id || `ppf-${idx}`,
+            type: "ppf",
+            name: p.name,
+            price: Number(p.price)
+          });
+        });
+        
+        // Group accessories
+        values.accessories.forEach((a: any, idx: number) => {
+          const business = assignments[`accessory-${idx}`] || "Auto Gamma";
+          businessItems[business].push({
+            id: a.id || `accessory-${idx}`,
+            type: "accessory",
+            name: a.name,
+            price: Number(a.price)
+          });
+        });
+        
+        // Group labor
+        if (values.laborCharge > 0) {
+          const business = assignments['labor'] || "Auto Gamma";
+          businessItems[business].push({
+            id: 'labor',
+            type: "labor",
+            name: "Labor Charge",
+            price: Number(values.laborCharge)
+          });
+        }
+        
+        // Create invoices for each business that has items
+        for (const business of ["Auto Gamma", "AGNX"] as BusinessType[]) {
+          const items = businessItems[business];
+          if (items.length > 0) {
+            const invoiceSubtotal = items.reduce((acc, item) => acc + item.price, 0);
+            const gstRate = values.gst || 18;
+            const gstAmount = Math.round(invoiceSubtotal * (gstRate / 100));
+            const total = invoiceSubtotal + gstAmount;
+            
+            const invoicePayload = {
+              jobCardId: result.id,
+              jobNo: result.jobNo,
+              business,
+              customerName: values.customerName,
+              phoneNumber: values.phoneNumber,
+              vehicleInfo,
+              items,
+              subtotal: invoiceSubtotal,
+              gst: gstRate,
+              gstAmount,
+              total
+            };
+            
+            console.log(`Creating invoice for ${business}:`, invoicePayload);
+            await apiRequest("POST", "/api/invoices", invoicePayload);
+          }
+        }
+      }
+      
       return result;
     },
     onSuccess: (data) => {
@@ -363,9 +462,11 @@ export default function AddJobPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/job-cards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/job-cards", jobId] });
       queryClient.invalidateQueries({ queryKey: [api.masters.ppf.list.path] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setShowBusinessModal(false);
       toast({
         title: "Success",
-        description: `Job card ${jobId ? "updated" : "created"} successfully`,
+        description: `Job card ${jobId ? "updated" : "created"} successfully${!jobId ? " and invoices generated" : ""}`,
       });
       setLocation("/job-cards");
     },
@@ -1142,16 +1243,226 @@ export default function AddJobPage() {
                 className="h-12 px-8 bg-red-600 hover:bg-red-700 font-bold" 
                 disabled={createJobMutation.isPending}
                 onClick={async () => {
-                  console.log("Update button clicked manually");
+                  console.log("Create Job Card button clicked");
                   const data = form.getValues();
-                  await onSubmit(data);
+                  
+                  // Validate form first
+                  const valid = await form.trigger();
+                  if (!valid) {
+                    toast({
+                      title: "Form Validation Error",
+                      description: "Please fill in all required fields.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  // If editing existing job, skip business modal
+                  if (jobId) {
+                    await onSubmit(data);
+                    return;
+                  }
+                  
+                  // Prepare items for business assignment
+                  const allItems: { id: string; type: string; name: string; price: number }[] = [];
+                  
+                  (data.services || []).forEach((s: any, idx: number) => {
+                    allItems.push({ id: `service-${idx}`, type: 'service', name: s.name, price: s.price });
+                  });
+                  
+                  (data.ppfs || []).forEach((p: any, idx: number) => {
+                    allItems.push({ id: `ppf-${idx}`, type: 'ppf', name: p.name, price: p.price });
+                  });
+                  
+                  (data.accessories || []).forEach((a: any, idx: number) => {
+                    allItems.push({ id: `accessory-${idx}`, type: 'accessory', name: a.name, price: a.price });
+                  });
+                  
+                  if ((data.laborCharge || 0) > 0) {
+                    allItems.push({ id: 'labor', type: 'labor', name: 'Labor Charge', price: data.laborCharge });
+                  }
+                  
+                  if (allItems.length === 0) {
+                    toast({
+                      title: "No Items",
+                      description: "Please add at least one service, PPF, accessory, or labor charge.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  
+                  // Initialize business assignments (default to Auto Gamma)
+                  const initialAssignments: Record<string, BusinessType> = {};
+                  allItems.forEach(item => {
+                    initialAssignments[item.id] = "Auto Gamma";
+                  });
+                  setBusinessAssignments(initialAssignments);
+                  setPendingFormData(data);
+                  setShowBusinessModal(true);
                 }}
+                data-testid="button-create-job"
               >
                 {createJobMutation.isPending ? "Saving..." : (jobId ? "Update Job Card" : "Create Job Card")}
               </Button>
             </div>
           </form>
         </Form>
+        
+        {/* Business Assignment Modal */}
+        <Dialog open={showBusinessModal} onOpenChange={setShowBusinessModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Complete Service - Assign Business</DialogTitle>
+              <DialogDescription>
+                Select which business each service item belongs to. Separate invoices will be generated for each business.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {pendingFormData && (
+                <>
+                  {(pendingFormData.services || []).map((s: any, idx: number) => (
+                    <div key={`service-${idx}`} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{s.name}</p>
+                        <p className="text-sm text-muted-foreground">₹{s.price.toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs text-muted-foreground uppercase">Assign To</span>
+                        <Select
+                          value={businessAssignments[`service-${idx}`] || "Auto Gamma"}
+                          onValueChange={(value: BusinessType) => {
+                            setBusinessAssignments(prev => ({ ...prev, [`service-${idx}`]: value }));
+                          }}
+                        >
+                          <SelectTrigger className="w-40" data-testid={`select-business-service-${idx}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Auto Gamma">Auto Gamma</SelectItem>
+                            <SelectItem value="AGNX">AGNX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(pendingFormData.ppfs || []).map((p: any, idx: number) => (
+                    <div key={`ppf-${idx}`} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{p.name}</p>
+                        <p className="text-sm text-muted-foreground">₹{p.price.toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs text-muted-foreground uppercase">Assign To</span>
+                        <Select
+                          value={businessAssignments[`ppf-${idx}`] || "Auto Gamma"}
+                          onValueChange={(value: BusinessType) => {
+                            setBusinessAssignments(prev => ({ ...prev, [`ppf-${idx}`]: value }));
+                          }}
+                        >
+                          <SelectTrigger className="w-40" data-testid={`select-business-ppf-${idx}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Auto Gamma">Auto Gamma</SelectItem>
+                            <SelectItem value="AGNX">AGNX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(pendingFormData.accessories || []).map((a: any, idx: number) => (
+                    <div key={`accessory-${idx}`} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{a.name}</p>
+                        <p className="text-sm text-muted-foreground">₹{a.price.toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs text-muted-foreground uppercase">Assign To</span>
+                        <Select
+                          value={businessAssignments[`accessory-${idx}`] || "Auto Gamma"}
+                          onValueChange={(value: BusinessType) => {
+                            setBusinessAssignments(prev => ({ ...prev, [`accessory-${idx}`]: value }));
+                          }}
+                        >
+                          <SelectTrigger className="w-40" data-testid={`select-business-accessory-${idx}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Auto Gamma">Auto Gamma</SelectItem>
+                            <SelectItem value="AGNX">AGNX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(pendingFormData.laborCharge || 0) > 0 && (
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">Labor Charge</p>
+                        <p className="text-sm text-muted-foreground">₹{pendingFormData.laborCharge.toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs text-muted-foreground uppercase">Assign To</span>
+                        <Select
+                          value={businessAssignments['labor'] || "Auto Gamma"}
+                          onValueChange={(value: BusinessType) => {
+                            setBusinessAssignments(prev => ({ ...prev, ['labor']: value }));
+                          }}
+                        >
+                          <SelectTrigger className="w-40" data-testid="select-business-labor">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Auto Gamma">Auto Gamma</SelectItem>
+                            <SelectItem value="AGNX">AGNX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowBusinessModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-red-600 hover:bg-red-700"
+                disabled={createJobMutation.isPending}
+                onClick={async () => {
+                  if (!pendingFormData) return;
+                  
+                  // Create the job first
+                  const subtotal = [...(pendingFormData.services || []), ...(pendingFormData.ppfs || []), ...(pendingFormData.accessories || [])].reduce((acc: number, curr: any) => acc + (Number(curr.price) || 0), 0) + (Number(pendingFormData.laborCharge) || 0);
+                  const afterDiscount = subtotal - (Number(pendingFormData.discount) || 0);
+                  const tax = afterDiscount * ((Number(pendingFormData.gst) || 18) / 100);
+                  
+                  const formattedData = {
+                    ...pendingFormData,
+                    services: (pendingFormData.services || []).map((s: any) => ({ ...s, price: Number(s.price) })),
+                    ppfs: (pendingFormData.ppfs || []).map((p: any) => ({ ...p, price: Number(p.price) })),
+                    accessories: (pendingFormData.accessories || []).map((a: any) => ({ ...a, price: Number(a.price) })),
+                    laborCharge: Number(pendingFormData.laborCharge),
+                    discount: Number(pendingFormData.discount),
+                    gst: Number(pendingFormData.gst),
+                    businessAssignments: businessAssignments,
+                  };
+                  
+                  createJobMutation.mutate(formattedData);
+                }}
+                data-testid="button-complete-generate-invoice"
+              >
+                {createJobMutation.isPending ? "Processing..." : "Complete & Generate Invoice"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
