@@ -833,9 +833,13 @@ export default function AddJobPage() {
                   <div className="md:col-span-2 space-y-1.5">
                     <label className="text-xs font-bold text-muted-foreground uppercase">Sqft Used</label>
                     <Input 
-                      type="number" 
+                      type="text" 
+                      inputMode="decimal"
                       value={rollQty || ""} 
-                      onChange={(e) => setRollQty(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9.]/g, '');
+                        setRollQty(parseFloat(value) || 0);
+                      }}
                       placeholder="0"
                       className="h-11"
                       disabled={!selectedPPF}
