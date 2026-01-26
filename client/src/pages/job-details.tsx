@@ -190,7 +190,7 @@ export default function JobDetailsPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Vehicle Type</p>
-                    <p className="text-base font-semibold text-slate-800">{job.vehicleType || "N/A"}</p>
+                    <p className="text-base font-semibold text-slate-800">{(job as any).vehicleType || "N/A"}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Year</p>

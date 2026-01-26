@@ -620,20 +620,23 @@ export class MongoStorage implements IStorage {
     return !!result;
   }
 
+  // Inquiries
   async getInquiries(): Promise<Inquiry[]> {
     const inquiries = await InquiryModel.find().sort({ date: -1 });
     return inquiries.map(i => ({
       id: i._id.toString(),
+      inquiryId: (i as any).inquiryId,
       customerName: i.customerName,
       phone: i.phone,
       email: i.email || undefined,
-      vehicleInfo: i.vehicleInfo,
-      serviceInterest: i.serviceInterest,
-      source: i.source,
-      status: i.status as any,
+      services: (i as any).services || [],
+      accessories: (i as any).accessories || [],
       notes: i.notes || undefined,
-      createdAt: i.date // using date field as createdAt
-    }));
+      ourPrice: (i as any).ourPrice || 0,
+      customerPrice: (i as any).customerPrice || 0,
+      status: (i as any).status as any,
+      createdAt: (i as any).createdAt || (i as any).date // try createdAt first, then fallback to date
+    })) as Inquiry[];
   }
 
   async createInquiry(inquiry: InsertInquiry): Promise<Inquiry> {
@@ -641,20 +644,23 @@ export class MongoStorage implements IStorage {
     const i = new InquiryModel({
       ...inquiry,
       inquiryId: nextInquiryId,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString()
     });
     await i.save();
     return {
       id: i._id.toString(),
+      inquiryId: (i as any).inquiryId,
       customerName: i.customerName,
       phone: i.phone,
       email: i.email || undefined,
-      vehicleInfo: i.vehicleInfo,
-      serviceInterest: i.serviceInterest,
-      source: i.source,
-      status: i.status as any,
+      services: i.services as any,
+      accessories: i.accessories as any,
       notes: i.notes || undefined,
-      createdAt: i.date
+      ourPrice: (i as any).ourPrice || 0,
+      customerPrice: (i as any).customerPrice || 0,
+      status: (i as any).status as any,
+      createdAt: (i as any).createdAt || (i as any).date
     };
   }
 
