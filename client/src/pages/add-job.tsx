@@ -70,7 +70,7 @@ export default function AddJobPage() {
   const searchParams = new URLSearchParams(useSearch());
   const jobId = searchParams.get("id");
 
-  const { data: jobToEdit, isLoading: isLoadingJob } = useQuery<JobCard>({
+  const { data: jobToEdit, isLoading: isLoadingJob, refetch: refetchJob } = useQuery<JobCard>({
     queryKey: ["/api/job-cards", jobId],
     queryFn: async () => {
       console.log("Fetching job for edit, jobId:", jobId);
@@ -81,38 +81,25 @@ export default function AddJobPage() {
       return data;
     },
     enabled: !!jobId,
-    staleTime: 0, // Ensure we always get fresh data when switching jobs
-    gcTime: 0,    // Clear from cache immediately when not used
+    staleTime: 0, 
+    gcTime: 0,    
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
-  const form = useForm<JobCardFormValues>({
-    resolver: zodResolver(jobCardSchema),
-    defaultValues: {
-      customerName: "",
-      phoneNumber: "",
-      emailAddress: "",
-      referralSource: "",
-      referrerName: "",
-      referrerPhone: "",
-      make: "",
-      model: "",
-      year: "",
-      licensePlate: "",
-      vehicleType: "",
-      services: [],
-      ppfs: [],
-      accessories: [],
-      laborCharge: 0,
-      discount: 0,
-      gst: 18,
-      serviceNotes: "",
-    },
-  });
+  // Force refetch whenever jobId changes and also on component mount
+  useEffect(() => {
+    if (jobId) {
+      console.log("Job ID effect triggered for", jobId, "- forcing refetch");
+      refetchJob();
+    }
+  }, [jobId, refetchJob]);
 
   // Handle initial form reset and subsequent Job ID changes
   useEffect(() => {
-    if (jobId && jobToEdit) {
-      console.log("Resetting form with jobToEdit data for jobId:", jobId);
+    // If we have a jobId but the jobToEdit is either missing or belongs to a different ID, don't reset yet
+    if (jobId && jobToEdit && String(jobToEdit.id) === String(jobId)) {
+      console.log("Resetting form with matched jobToEdit data for jobId:", jobId);
       form.reset({
         customerName: jobToEdit.customerName || "",
         phoneNumber: jobToEdit.phoneNumber || "",
