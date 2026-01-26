@@ -56,6 +56,7 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
 import AddJobPage from "@/pages/add-job";
 import JobCardsPage from "@/pages/job-cards";
 import JobDetailsPage from "@/pages/job-details";
+import InvoicePage from "@/pages/invoice";
 
 function Router() {
   return (
@@ -74,7 +75,7 @@ function Router() {
       <Route path="/job-cards"><ProtectedRoute component={JobCardsPage} /></Route>
       <Route path="/job-cards/:id"><ProtectedRoute component={JobDetailsPage} /></Route>
       <Route path="/add-job"><ProtectedRoute component={AddJobPage} /></Route>
-      <Route path="/invoice"><ProtectedRoute component={DashboardPage} /></Route>
+      <Route path="/invoice"><ProtectedRoute component={InvoicePage} /></Route>
       <Route path="/technicians"><ProtectedRoute component={TechniciansPage} /></Route>
       <Route path="/appointments"><ProtectedRoute component={AppointmentsPage} /></Route>
       <Route path="/tickets"><ProtectedRoute component={DashboardPage} /></Route>
