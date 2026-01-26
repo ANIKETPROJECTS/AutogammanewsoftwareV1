@@ -87,7 +87,7 @@ export default function InquiryPage() {
     
     doc.setFontSize(10);
     doc.text(`ID: ${inquiry.inquiryId}`, pageWidth - 14, 28, { align: "right" });
-    doc.text(`Date: ${format(new Date(inquiry.date), "MMM dd, yyyy")}`, pageWidth - 14, 34, { align: "right" });
+    doc.text(`Date: ${format(new Date(inquiry.date || inquiry.createdAt || new Date()), "MMM dd, yyyy")}`, pageWidth - 14, 34, { align: "right" });
 
     // Customer Info
     doc.setDrawColor(226, 232, 240); // Slate-200
@@ -103,17 +103,17 @@ export default function InquiryPage() {
 
     // Items Table
     const tableData = [
-      ...inquiry.services.map(s => [
+      ...(inquiry.services || []).map(s => [
         s.serviceName + (s.vehicleType ? ` (${s.vehicleType})` : ""),
         s.warrantyName || "-",
-        `INR ${s.price.toLocaleString()}`,
-        `INR ${(s.customerPrice ?? s.price).toLocaleString()}`
+        `INR ${(s.price || 0).toLocaleString()}`,
+        `INR ${(s.customerPrice ?? s.price ?? 0).toLocaleString()}`
       ]),
-      ...inquiry.accessories.map(a => [
+      ...(inquiry.accessories || []).map(a => [
         a.accessoryName + ` (${a.category})`,
         "-",
-        `INR ${a.price.toLocaleString()}`,
-        `INR ${(a.customerPrice ?? a.price).toLocaleString()}`
+        `INR ${(a.price || 0).toLocaleString()}`,
+        `INR ${(a.customerPrice ?? a.price ?? 0).toLocaleString()}`
       ])
     ];
 
@@ -162,8 +162,8 @@ export default function InquiryPage() {
 
   const handleSendWhatsApp = (inquiry: Inquiry) => {
     const servicesList = [
-      ...inquiry.services.map(s => `- ${s.serviceName}${s.warrantyName ? ` (${s.warrantyName})` : ""}`),
-      ...inquiry.accessories.map(a => `- ${a.accessoryName}`)
+      ...(inquiry.services || []).map(s => `- ${s.serviceName}${s.warrantyName ? ` (${s.warrantyName})` : ""}`),
+      ...(inquiry.accessories || []).map(a => `- ${a.accessoryName}`)
     ].join("\n");
 
     const message = `Hi ${inquiry.customerName},
@@ -172,14 +172,14 @@ Thank you for your interest in Auto Gamma Car Care Studio!
 
 *QUOTATION DETAILS:*
 ID: ${inquiry.inquiryId}
-Date: ${format(new Date(inquiry.date), "MMM dd, yyyy")}
+Date: ${format(new Date(inquiry.date || inquiry.createdAt || new Date()), "MMM dd, yyyy")}
 
 *SERVICES REQUESTED:*
 ${servicesList || "General Inquiry"}
 
 *PRICING:*
-Our Quote: ₹${inquiry.ourPrice.toLocaleString()}
-Your Quote: ₹${inquiry.customerPrice.toLocaleString()}
+Our Quote: ₹${(inquiry.ourPrice || 0).toLocaleString()}
+Your Quote: ₹${(inquiry.customerPrice || 0).toLocaleString()}
 
 *SPECIAL NOTES:*
 ${inquiry.notes || "No special notes"}
@@ -347,51 +347,32 @@ Auto Gamma Car Care Studio`;
     form.setValue("customerPrice", currentCustomerPrice + accessory.price);
   };
 
-  const filteredInquiries = useMemo(() => {
-    return inquiries.filter((i) => {
-      const matchesSearch = i.customerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           i.phone.includes(searchTerm);
-      const matchesService = serviceFilter === "ALL" || 
-                            i.services.some(s => s.serviceName === serviceFilter);
-      return matchesSearch && matchesService;
-    });
-  }, [inquiries, searchTerm, serviceFilter]);
-
   const onSubmit = (data: InsertInquiry) => {
-    console.log("Submitting inquiry data:", data);
-    
-    // Ensure all numeric fields are correctly typed
-    const payload = {
-      ...data,
-      ourPrice: Number(data.ourPrice || 0),
-      customerPrice: Number(data.customerPrice || 0),
-      // Ensure prices within services and accessories arrays are also numbers
-      services: data.services.map(s => ({
-        ...s,
-        price: Number(s.price || 0)
-      })),
-      accessories: data.accessories.map(a => ({
-        ...a,
-        price: Number(a.price || 0)
-      }))
-    };
-
-    console.log("Cleaned payload:", payload);
-    createMutation.mutate(payload);
+    createMutation.mutate(data);
   };
 
   const handleSaveClick = () => {
-    console.log("Save Inquiry button clicked");
-    const values = form.getValues();
-    console.log("Form values:", values);
     form.handleSubmit(onSubmit)();
   };
 
   const allServiceNames = useMemo(() => {
     const names = new Set<string>();
-    inquiries.forEach(i => i.services.forEach(s => names.add(s.serviceName)));
+    inquiries?.forEach(i => {
+      i.services?.forEach(s => names.add(s.serviceName));
+    });
     return Array.from(names);
   }, [inquiries]);
+
+
+  const filteredInquiries = useMemo(() => {
+    return (inquiries || []).filter((i) => {
+      const matchesSearch = i.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           i.phone?.includes(searchTerm);
+      const matchesService = serviceFilter === "ALL" || 
+                            i.services?.some(s => s.serviceName === serviceFilter);
+      return matchesSearch && matchesService;
+    });
+  }, [inquiries, searchTerm, serviceFilter]);
 
 
   return (

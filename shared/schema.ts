@@ -206,18 +206,38 @@ export type InsertJobCard = z.infer<typeof insertJobCardSchema>;
 export const inquiryStatusSchema = z.enum(["NEW", "FOLLOW_UP", "CONVERTED", "LOST"]);
 export type InquiryStatus = z.infer<typeof inquiryStatusSchema>;
 
+export const inquiryItemSchema = z.object({
+  serviceId: z.string(),
+  serviceName: z.string(),
+  vehicleType: z.string().optional(),
+  warrantyName: z.string().optional(),
+  price: z.number(),
+  customerPrice: z.number().optional(),
+});
+
+export const inquiryAccessorySchema = z.object({
+  accessoryId: z.string(),
+  accessoryName: z.string(),
+  category: z.string(),
+  price: z.number(),
+  customerPrice: z.number().optional(),
+});
+
 export const inquirySchema = z.object({
   id: z.string().optional(),
+  inquiryId: z.string().optional(),
   customerName: z.string().min(1),
   phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
-  vehicleInfo: z.string().min(1),
-  serviceInterest: z.string().min(1),
-  source: z.string().min(1),
-  status: inquiryStatusSchema.default("NEW"),
+  email: z.string().optional(),
+  services: z.array(inquiryItemSchema).default([]),
+  accessories: z.array(inquiryAccessorySchema).default([]),
   notes: z.string().optional(),
+  ourPrice: z.number().default(0),
+  customerPrice: z.number().default(0),
+  status: inquiryStatusSchema.default("NEW"),
   createdAt: z.string().default(() => new Date().toISOString()),
 });
 
 export type Inquiry = z.infer<typeof inquirySchema>;
-export const insertInquirySchema = inquirySchema.omit({ id: true, status: true, createdAt: true });
+export const insertInquirySchema = inquirySchema.omit({ id: true, inquiryId: true, status: true, createdAt: true });
 export type InsertInquiry = z.infer<typeof insertInquirySchema>;
